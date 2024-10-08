@@ -1,17 +1,20 @@
 cmake_minimum_required(VERSION 3.26)
 project(imtool LANGUAGES CXX)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
 # Set compiler options
 add_compile_options(-Wall -Wextra -Werror -pedantic -pedantic-erros -Wconversion -Wsign-conversion)
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -match=native")
-# Enable Googletest LIBRARY
+
+# Enable GoogleTest LIBRARY
 include(FetchContent)
-fetchContent_Declare(
+FetchContent_Declare(
     googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG V1.15.2
+    GIT_TAG v1.15.2
 )
 FetchContent_MakeAvailable(googletest)
 
@@ -29,25 +32,21 @@ FetchContent_MakeAvailable(GSL)
 set(CMAKE_CXX_CLANG_TIDY clang-tidy;
 -format-style=file;
 -header-filter=.;)
+
 # All icludes relative to source tree root.
 include directories (PUBLIC .)
-
-
 
 # Process cmake from sim and fluid directories
 add_subdirectory(common)
 add_subdirectory(imgaos)
 add_subdirectory(imgsoa)
-add_subdirectory(imtool−aos)
-add_subdirectory(imtool−soa)
+add_subdirectory(imtool-aos)
+add_subdirectory(imtool-soa)
+
 # Unit tests and functional tests
 enable_testing()
-add_subdirectory(utest−common)
-add_subdirectory(utest−imgaos)
-add_subdirectory(utest−imgsoa)
-add_subdirectory(ftest−aos)
-add_subdirectory(ftest−soa)
-
-
-# Process cmake from sim and fluid directories
-a
+add_subdirectory(utest-common)
+add_subdirectory(utest-imgaos)
+add_subdirectory(utest-imgsoa)
+add_subdirectory(ftest-aos)
+add_subdirectory(ftest-soa)
