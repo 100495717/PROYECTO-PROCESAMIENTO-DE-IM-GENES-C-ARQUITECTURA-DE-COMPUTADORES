@@ -1,4 +1,4 @@
-#include "ppm.hpp"
+#include "../imgsoa/ppm.hpp"
 #include <fstream>
 #include <stdexcept>
 #include "imagesoa.hpp"

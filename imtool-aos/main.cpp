@@ -1,6 +1,8 @@
 #include <iostream>
 #include "common/progars.hpp"
 #include "imgaos/ppm.hpp"
+#include "imgaos/image-operations.hpp"
+
 
 int main(int argc, char* argv[]){
     try{
@@ -10,22 +12,22 @@ int main(int argc, char* argv[]){
         std:: string operation = args[3];
     
     
-        //Leemos la imagen
+        // Leemos la imagen
         ImageAos img = read_ppm(input);
 
-        //Hacer la operación
-        //Si la operación es "info" imprimimos la información de la imagen
+        // Hacer la operación
+        // Si la operación es "info" imprimimos la información de la imagen
         if (operation == "info"){
             print_image_info(img);
         } 
 
-        //Si la operación es "maxlevel" aplicamos el nivel máximo
+        // Si la operación es "maxlevel" aplicamos el nivel máximo
         else if (operation == "maxlevel") {
             int maxlevel = std::stoi(args[4]);
             max_level(img, maxlevel);
         }
 
-        //Si la operación es "resize" redimensionamos la imagen
+        // Si la operación es "resize" redimensionamos la imagen
         else if (operation == "resize") {
             int width = std::stoi(args[4]);
             int height = std::stoi(args[5]);
@@ -33,18 +35,18 @@ int main(int argc, char* argv[]){
 
         }
 
-        //Si la operación es "cutfreq" cortamos la frecuencia 
+        // Si la operación es "cutfreq" cortamos la frecuencia 
         else if (operation == "cutfreq"){
             int n = std::stoi(args[4]);
             cut_least_freq(img, n);
         } 
         
-        //Si la operación es "cutfreq" hacemos una conversión de la imagen al formato cppm
+        // Si la operación es "cutfreq" hacemos una conversión de la imagen al formato cppm
         else if (operation == "compress"){
             compress_image(img, output);
         } 
 
-        //Escribimos la imagen modificada en la salida
+        // Escribimos la imagen modificada en la salida
         write_ppm(output, img);
     }
     

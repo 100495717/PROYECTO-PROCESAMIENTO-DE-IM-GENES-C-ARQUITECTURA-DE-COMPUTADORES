@@ -11,15 +11,15 @@ int main(int argc, char* argv[]){
         std:: string operation = args[3];
     
     
-        //Leemos la imagen
+        // Leemos la imagen
         ImageAos img = read_ppm(input);
 
-        //Hacer la operación
-        //Si la operación es "info" imprimimos la información de la imagen
+        // Hacer la operación
+        // Si la operación es "info" imprimimos la información de la imagen
         if (operation == "info"){
             print_image_info(img);
         } 
-        //Si la operación es "maxlevel" aplicamos el nivel máximo
+        // Si la operación es "maxlevel" aplicamos el nivel máximo
         else if (operation == "maxlevel"){
             if (args.size() < 5){
                 throw std::invalid_argument("Falta el argumento de nivel máximo");
@@ -27,7 +27,7 @@ int main(int argc, char* argv[]){
             int maxlevel = std::stoi(args[4]);
             max_level(img, maxlevel);
         } 
-        //Si la operación es "resize" redimensionamos la imagen
+        // Si la operación es "resize" redimensionamos la imagen
         else if (operation == "resize"){
             if (args.size() != 6){
                 throw std::invalid_argument("Faltan los argumentos de ancho y alto");
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]){
             resize_image(img, width, height);
 
         }
-        //Si la operación es "cutfreq" cortamos la frecuencia 
+        // Si la operación es "cutfreq" cortamos la frecuencia 
         else if (operation == "cutfreq"){
             if (args.size() != 5){
                 throw std::invalid_argument("Falta el argumento de frecuencia de corte");
@@ -50,7 +50,7 @@ int main(int argc, char* argv[]){
             throw std::invalid_argument("Operación no válida" + operation);
         }
 
-        //Escribimos la imagen modificada en la salida
+        // Escribimos la imagen modificada en la salida
         write_ppm(output, img);
     }catch (const std::exception& e){
         std::cerr << "Error: " << e.what() << std::endl;
