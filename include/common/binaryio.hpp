@@ -68,15 +68,31 @@ public:
         return std::stoi(num_str);
     }
 
-    // Función que salta una cantidad de bytes
-    void skip(size_t count) {
-        // Comprobamos que estamos dentro de los límites del buffer
-        if (position + count > data.size()) {
-            throw std::runtime_error("Lectura fuera de los límites del buffer");
+    // Función que salta bytes de espacios en blanco y comentarios 
+    void skip() {
+        while (position < data.size()) {
+            char c = data[position];  // Leer el byte actual
+            // Si es un espacio en blanco, tabulación o salto de línea
+            if (isspace(c)) {
+                ++position;  // Avanzamos la posición para saltar el espacio
+            }
+            // Si es un comentario
+            else if (c == '#') {
+                // Avanzamos la posición hasta el final de la línea (buscando '\n')
+                while (position < data.size() && data[position] != '\n') {
+                    ++position;
+                }
+                if (position < data.size() && data[position] == '\n') {
+                    ++position;  // Saltar también el salto de línea final ('\n')
+                }
+            }
+            // Si no es ni espacio ni comentario, salimos del bucle
+            else {
+                break;
+            }
         }
-        // Avanzamos la posición actual en el buffer la cantidad de bytes dada por parámetro
-        position += count;
     }
+
 
 private:
     const std::vector<uint8_t>& data;  // Buffer de bytes
