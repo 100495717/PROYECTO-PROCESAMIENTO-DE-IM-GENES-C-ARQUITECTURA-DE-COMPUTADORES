@@ -23,6 +23,7 @@ std::vector<uint8_t> read_binary_file(const std::string& filename) {
     // Creamos un buffer del tamaño del archivo
     std::vector<uint8_t> buffer(size);
     // Convertimos el buffer en un puntero a char y leemos los datos del archivo
+    // Hay que negar la regla para utilizar el reinterpret_cast
     // NOLINTNEXTLINE(cppcoreguidelines−pro−type−reinterpret−cast)
     if (!file.read(reinterpret_cast<char*>(buffer.data()), size)) {
         throw std::runtime_error("Error: Fallo al leer el archivo: " + filename);
@@ -43,6 +44,7 @@ void write_binary_file(const std::string& filename, const std::vector<uint8_t>& 
     }
 
     // Convertimos el vector de bytes (data) en un puntero a char y escribimos su contenido en el archivo
+    // Hay que negar la regla para utilizar el reinterpret_cast
     // NOLINTNEXTLINE(cppcoreguidelines−pro−type−reinterpret−cast)
     if (!file.write(reinterpret_cast<const char*>(data.data()), data.size())) {
         throw std::runtime_error("Error: Fallo al escribir en el archivo: " + filename);

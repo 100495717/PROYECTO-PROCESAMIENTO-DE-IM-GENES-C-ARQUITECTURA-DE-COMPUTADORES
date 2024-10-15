@@ -34,7 +34,7 @@ set(CMAKE_CXX_CLANG_TIDY clang-tidy;
 -header-filter=.;)
 
 # All icludes relative to source tree root.
-include directories (PUBLIC .)
+include_directories (PUBLIC .)
 
 # Process cmake from sim and fluid directories
 add_subdirectory(common)

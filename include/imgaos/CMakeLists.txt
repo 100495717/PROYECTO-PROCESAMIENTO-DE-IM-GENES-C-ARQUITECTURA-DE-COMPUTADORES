@@ -1,7 +1,5 @@
 add_library(imgaos
-    imageaos.cpp
-    ppm.cpp
-    # other2.cpp
+    image-operations.cpp
 )
 
 target_link_libraries(imgaos PRIVATE common Microsoft.GSL::GSL)

@@ -1,6 +1,5 @@
-add library (imgsoa
-    imagesoa.cpp
-    ppm.cpp
+add_library(imgsoa
+    image-operations.cpp
 )
 
 target_link_libraries(imgsoa PRIVATE common Microsoft.GSL::GSL)

@@ -16,6 +16,9 @@ ImageAos read_ppm_image(const std::string& filename) {
         throw std::runtime_error("Formato de archivo no válido");
     }
 
+    // Saltar espacios en blanco y comentarios
+    
+
     int width, height, maxval;
     file >> width >> height >> maxval;
     file.ignore(1);

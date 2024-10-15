@@ -2,6 +2,11 @@
 #include "common/progars.hpp"
 #include "imgaos/ppm.hpp"
 #include "imgaos/image-operations.hpp"
+#include "common/binaryio.hpp"
+#include "common/header_ppm.hpp"
+#include <stdexcept>
+#include <vector>
+#include <string>
 
 
 int main(int argc, char* argv[]){
@@ -11,7 +16,16 @@ int main(int argc, char* argv[]){
         std:: string output = args[2];
         std:: string operation = args[3];
     
-    
+
+        // Leer el archivo binario
+        std::vector<uint8_t> data = read_binary_file(input);
+
+        // Crear el lector binario a partir del buffer
+        BinaryReader reader(data);
+
+        // Leer el encabezado PPM 
+        PPMHeader header = read_ppm_header(reader);
+
         // Leemos la imagen
         ImageAos img = read_ppm(input);
 
