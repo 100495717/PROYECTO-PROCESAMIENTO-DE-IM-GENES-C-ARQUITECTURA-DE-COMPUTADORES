@@ -5,7 +5,7 @@ add_executable(utest-imgsoa
 )
 
 # Library dependencies
-target_link_libraries(utest-img-soa
+target_link_libraries(utest-imgsoa
     PRIVATE
     img-soa
     GTest::gtest_main

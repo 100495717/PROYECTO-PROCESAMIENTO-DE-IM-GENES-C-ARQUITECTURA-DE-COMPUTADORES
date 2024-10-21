@@ -1,7 +1,7 @@
 #include <iostream>
 #include "common/progars.hpp"
-#include "imgaos/ppm.hpp"
-#include "imgaos/image-operations.hpp"
+#include "../imgaos/ppm-aos.hpp"
+#include "imgaos/image-operations-aos.hpp"
 #include "common/binaryio.hpp"
 #include "common/header_ppm.hpp"
 #include <stdexcept>
@@ -15,8 +15,8 @@ int main(int argc, char* argv[]){
         std:: string input = args[1];
         std:: string output = args[2];
         std:: string operation = args[3];
-    
 
+        
         // Leer el archivo binario
         std::vector<uint8_t> data = read_binary_file(input);
 
