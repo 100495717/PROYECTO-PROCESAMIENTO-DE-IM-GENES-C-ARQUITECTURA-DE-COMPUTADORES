@@ -6,83 +6,80 @@
 #include <iostream>
 
 
-ImageAos read_ppm_image(const std::string& filename) {
-    // Abrir archivo binario
-    std::ifstream input_file(filename, std::ios::binary);
-    if (!input_file) {
+ImageAos read_ppm(const std::string& filename) {
+    std::ifstream file(filename, std::ios::binary);
+    if (!file) {
         throw std::runtime_error("No se pudo abrir el archivo para lectura");
     }
 
-    // Leer todo el archivo en un vector de bytes
-    std::vector<uint8_t> file_data((std::istreambuf_iterator<char>(input_file)),
-                                   std::istreambuf_iterator<char>());
+    std::string magic;
+    file >> magic;
+    if (magic != "P6") {
+        throw std::runtime_error("Formato de archivo no válido");
+    }
 
-    // Crear el BinaryReader con el buffer
-    BinaryReader reader(file_data);
+    // Saltar espacios en blanco y comentarios
+    
 
-    // Leer el encabezado PPM
-    PPMHeader header = read_ppm_header(reader);
+    int width, height, maxval;
+    file >> width >> height >> maxval;
+    file.ignore(1);
 
-    // Crear una instancia de ImageAos con la información de ancho, alto y max_color_value
-    ImageAos image(header.width, header.height, header.maxval);
+    ImageAos image;
+    image.width = width;
+    image.height = height;
+    image.max_color_value = maxval;
+    image.pixels.resize(width * height);
 
-    // Leer los píxeles de acuerdo al valor máximo de color
-    if (header.maxval <= 255) {
-        // Leer 3 bytes (RGB) por cada píxel
-        for (int i = 0; i < header.height; ++i) {
-            for (int j = 0; j < header.width; ++j) {
-                Pixel p;
-                p.r = reader.read_byte();
-                p.g = reader.read_byte();
-                p.b = reader.read_byte();
-                image.pixels[i * header.width + j] = p; // Almacenar el píxel en la imagen
-            }
+    if(maxval < 256){
+        //Cada píxel está representado por 3 bytes
+        for (int i= 0; i < width*height; ++i){
+            unsigned char rgb[3];
+            file.read(reinterpret_cast<char*>(rgb), 3);
+            image.pixels[i] = {rgb[0], rgb[1], rgb[2]};
         }
     } else {
-        // Leer 6 bytes (RGB, 2 bytes por color) por cada píxel en formato little-endian
-        for (int i = 0; i < header.height; ++i) {
-            for (int j = 0; j < header.width; ++j) {
-                Pixel p;
-                p.r = reader.read_word_le();
-                p.g = reader.read_word_le();
-                p.b = reader.read_word_le();
-                image.pixels[i * header.width + j] = p; // Almacenar el píxel en la imagen
-            }
+        //Cada píxel está representado por 6 bytes
+        for (int i= 0; i < width*height; ++i){
+            unsigned short rgb[3];
+            file.read(reinterpret_cast<char*>(rgb), 6);
+            image.pixels[i] = {
+                                static_cast<unsigned char>(rgb[0] >> 8), 
+                                static_cast<unsigned char>(rgb[1] >> 8), 
+                                static_cast<unsigned char>(rgb[2] >> 8)};
         }
     }
 
     return image;
 }
 
-
-void write_ppm_image(const std::string& filename, const ImageAos& image) {
-    // Abrir archivo para escritura en modo binario
-    std::ofstream output_file(filename, std::ios::binary);
-    if (!output_file) {
+void write_ppm(const std::string& filename, const ImageAos& image) {
+    std::ofstream file(filename, std::ios::binary);
+    if (!file) {
         throw std::runtime_error("No se pudo abrir el archivo para escritura");
     }
 
-    // Escribir el encabezado PPM
-    output_file << "P6\n" << image.width << " " << image.height << "\n" << image.max_color_value << "\n";
+    file << "P6\n" << image.width << " " << image.height << "\n" << image.max_color_value << "\n";
 
-    // Escribir los píxeles en formato binario
-    if (image.max_color_value <= 255) {
-        // Escribir 3 bytes (RGB) por cada píxel
+    if (image.max_color_value < 256) {
+        
+        //Cada píxel está representado por 3 bytes
         for (const auto& pixel : image.pixels) {
-            output_file.write(reinterpret_cast<const char*>(&pixel.r), 1);
-            output_file.write(reinterpret_cast<const char*>(&pixel.g), 1);
-            output_file.write(reinterpret_cast<const char*>(&pixel.b), 1);
+            unsigned char r = static_cast<unsigned char>(pixel.r);
+            unsigned char g = static_cast<unsigned char>(pixel.g);
+            unsigned char b = static_cast<unsigned char>(pixel.b);
+            file.write(reinterpret_cast<char*>(r), 1);
+            file.write(reinterpret_cast<char*>(g), 1);
+            file.write(reinterpret_cast<char*>(b), 1);
         }
     } else {
-        // Escribir 6 bytes (RGB, 2 bytes por color) por cada píxel en formato little-endian
         for (const auto& pixel : image.pixels) {
-            uint16_t r_le = static_cast<uint16_t>(pixel.r);
-            uint16_t g_le = static_cast<uint16_t>(pixel.g);
-            uint16_t b_le = static_cast<uint16_t>(pixel.b);
-
-            output_file.write(reinterpret_cast<const char*>(&r_le), 2);
-            output_file.write(reinterpret_cast<const char*>(&g_le), 2);
-            output_file.write(reinterpret_cast<const char*>(&b_le), 2);
+            unsigned short r = pixel.r;
+            unsigned short g = pixel.g;
+            unsigned short b = pixel.b;
+            file.write(reinterpret_cast<const char*>(&r), 2);
+            file.write(reinterpret_cast<const char*>(&g), 2);
+            file.write(reinterpret_cast<const char*>(&b), 2);
         }
     }
 }

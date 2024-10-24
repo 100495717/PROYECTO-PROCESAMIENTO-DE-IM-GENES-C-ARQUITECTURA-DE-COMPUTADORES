@@ -5,6 +5,7 @@
 #include <cmath>
 #include <vector>
 #include <map>
+#include <limits>
 
 void print_image_info(const ImageAos& img){
     std::cout << "Ancho: " << img.width << std::endl;
@@ -15,7 +16,10 @@ void print_image_info(const ImageAos& img){
 
 void max_level(ImageAos& img, int maxlevel){
     double scale = static_cast<double>(maxlevel) / img.max_color_value;
-
+    if (maxlevel > 65535){
+        std::cout << "Te pasas del maximo jefe" << std::endl;
+        return;
+    }
     //Verificar si necesitamos cambiar la representacion de los pixeles
     bool fromOneToTwoBytes = (img.max_color_value <= 255 && maxlevel > 255);
     bool fromTwoToOneBytes = (img.max_color_value > 255 && maxlevel <= 255);
@@ -81,12 +85,44 @@ void resize_image(ImageAos& img, int width, int height){
     img.pixels = std::move(new_pixels);
 }
 
+//Función auxiliar para calcular la distancia euclídea entre dos píxeles
+double color_distance(const Pixel& a, const Pixel& b){
+    return std::sqrt(std::pow(a.r - b.r, 2) + std::pow(a.g - b.g, 2) + std::pow(a.b - b.b, 2));
+}
+
+//Función para encontrar el píxel más cercano
+Pixel find_closest_pixel(const Pixel& target, const std::vector<Pixel>& pixels) {
+    double min_distance = std::numeric_limits<double>::max();
+    Pixel closest = target;
+
+    for (const auto& pixel : pixels) {
+        double distance = color_distance(target, pixel);
+        if (distance < min_distance) {
+            min_distance = distance;
+            closest = pixel;
+        }
+    }
+
+    return closest;
+}
+
+
+
+
+
+
+
+
+
 void cut_least_freq(ImageAos& img, int n) {
+
+    // Paso 1: Determinar la frecuencia de cada color
     std::map<Pixel, int> freq_map;
     for (const auto& pixel : img.pixels) {
         freq_map[pixel]++;
     }
 
+    // Paso 2: Identificar los n colores menos frecuentes
     std::vector<std::pair<Pixel, int>> freq_vec(freq_map.begin(), freq_map.end());
     std::sort(freq_vec.begin(), freq_vec.end(), [](const auto& a, const auto& b) {
         return a.second < b.second;
@@ -96,12 +132,29 @@ void cut_least_freq(ImageAos& img, int n) {
     for (int i = 0; i < n && i < freq_vec.size(); ++i) {
         least_freq_pixels.push_back(freq_vec[i].first);
     }
+     // Mensaje de depuración: Imprimir los colores menos frecuentes
+    std::cout << "Colores menos frecuentes:" << std::endl;
+    for (const auto& pixel : least_freq_pixels) {
+        std::cout << "(" << static_cast<int>(pixel.r) << ", " << static_cast<int>(pixel.g) << ", " << static_cast<int>(pixel.b) << ")" << std::endl;
+    }
+    // Paso 3: Reemplazar los colores menos frecuentes por el color más cercano restante
+    std::vector<Pixel> remaining_pixels;
+    for (const auto& [pixel, _] : freq_map) {
+        if (std::find(least_freq_pixels.begin(), least_freq_pixels.end(), pixel) == least_freq_pixels.end()) {
+            remaining_pixels.push_back(pixel);
+        }
+    }
 
     for (auto& pixel : img.pixels) {
         if (std::find(least_freq_pixels.begin(), least_freq_pixels.end(), pixel) != least_freq_pixels.end()) {
-            pixel = {0, 0, 0}; // Replace with black
+            Pixel old_pixel = pixel;
+            pixel = find_closest_pixel(pixel, remaining_pixels);
+            // Mensaje de depuración: Imprimir el reemplazo de color
+            std::cout << "Reemplazando color (" << static_cast<int>(old_pixel.r) << ", " << static_cast<int>(old_pixel.g) << ", " << static_cast<int>(old_pixel.b) << ") "
+                      << "por (" << static_cast<int>(pixel.r) << ", " << static_cast<int>(pixel.g) << ", " << static_cast<int>(pixel.b) << ")" << std::endl;
         }
     }
+    
 }
 
 void compress_image(const ImageAos& img, const std::string& output) {
@@ -113,13 +166,53 @@ void compress_image(const ImageAos& img, const std::string& output) {
     }
 
     // Escribir un encabezado simple para el archivo comprimido
-    file << "CPPM\n" << img.width << " " << img.height << "\n";
+    file << "C6\n" << img.width << " " << img.height << "\n";
 
     // Escribir los datos de los píxeles comprimidos (aquí simplemente se copian los datos)
+    std::map<Pixel, int> freq_map;
+    std::vector<Pixel> color_list;
+    int color_index = 0;
     for (const auto& pixel : img.pixels) {
-        file.put(pixel.r);
-        file.put(pixel.g);
-        file.put(pixel.b);
+        if (freq_map.find(pixel) == freq_map.end()) {
+            freq_map[pixel] = color_index++;
+            color_list.push_back(pixel);
+        }
+    }
+    //Escribo el número de entradas de la tabla de colores
+    file << color_list.size() << "\n";
+
+    //Escribo la tabla de colores
+    for (const auto& pixel : color_list) {
+        if(img.max_color_value<=255){
+            file.put(pixel.r);
+            file.put(pixel.g);
+            file.put(pixel.b);
+        }
+        else{
+            file.put(pixel.r >> 8);
+            file.put(pixel.r & 0xFF);
+            file.put(pixel.g >> 8);
+            file.put(pixel.g & 0xFF);
+
+            file.put(pixel.b >> 8);
+            file.put(pixel.b & 0xFF);
+
+        }
+    }
+    //Escribo los índices de los colores
+    int index;
+    if (color_list.size() < 256){
+        index = 1;
+    } else if (color_list.size() < 65536){
+        index = 2;
+    } else {
+        index = 4;
+    }
+    for (const auto& pixel : img.pixels){
+        int indice = freq_map[pixel];
+        for (int i = 0; i < index; i++){
+            file.put((indice >> (i*8)) & 0xFF);
+        }
     }
 
     if (!file) {
