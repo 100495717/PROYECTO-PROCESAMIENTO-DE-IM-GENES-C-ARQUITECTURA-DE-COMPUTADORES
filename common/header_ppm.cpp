@@ -2,8 +2,7 @@
 #include <stdexcept>
 
 PPMHeader read_ppm_header(BinaryReader& reader) {
-    PPMHeader header
-
+    PPMHeader header;
     // Leer el número mágico (debe ser "P6")
     header.magic = reader.read_ascii_string(2);
     if (header.magic != "P6") {

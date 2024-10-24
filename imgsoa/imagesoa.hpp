@@ -14,4 +14,6 @@ public:
     std::vector <int> redChannel;
     std::vector <int> greenChannel;
     std::vector <int> blueChannel;
-}
+};
+
+#endif // IMAGESOA_HPP

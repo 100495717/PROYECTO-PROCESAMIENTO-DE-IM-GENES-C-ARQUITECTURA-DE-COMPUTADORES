@@ -16,7 +16,6 @@ int main(int argc, char* argv[]){
         std:: string output = args[2];
         std:: string operation = args[3];
 
-        
         // Leer el archivo binario
         std::vector<uint8_t> data = read_binary_file(input);
 
@@ -46,7 +45,6 @@ int main(int argc, char* argv[]){
             int width = std::stoi(args[4]);
             int height = std::stoi(args[5]);
             resize_image(img, width, height);
-
         }
 
         // Si la operación es "cutfreq" cortamos la frecuencia 

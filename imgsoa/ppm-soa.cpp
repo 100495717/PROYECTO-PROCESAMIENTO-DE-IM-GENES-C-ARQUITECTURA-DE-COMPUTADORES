@@ -28,6 +28,11 @@ ImageSoa read_ppm(const std::string& filename){
     image.height = height;
     image.max_color_value = maxval;
 
+    // Comprobamos si los parámetros de la imagen son válidos
+    if (width <= 0 || height <= 0 || maxval <= 0) {
+        throw std::runtime_error("Parámetros de imagen no válidos");
+    }
+
     int numPixeles = width * height;
 
     //Redimensionamos los vectores (Arrays) 
@@ -40,9 +45,9 @@ ImageSoa read_ppm(const std::string& filename){
     if (maxval <= 255){
         for(int i = 0; i<numPixeles; i++){
             unsigned char r, g, b;
-            file.read(reinterpret_cast<char*>(&r), 1) //Leemos 1 byte para el rojo
-            file.read(reinterpret_cast<char*>(&g), 1) //Leemos 1 byte para el verde
-            file.read(reinterpret_cast<char*>(br), 1) //Leemos 1 byte para el azul
+            file.read(reinterpret_cast<char*>(&r), 1); //Leemos 1 byte para el rojo
+            file.read(reinterpret_cast<char*>(&g), 1); //Leemos 1 byte para el verde
+            file.read(reinterpret_cast<char*>(&b), 1); //Leemos 1 byte para el azul
 
             image.redChannel[i] = static_cast<int>(r); //Lo convertimos a entero y guardamos
             image.greenChannel[i] = static_cast<int>(g);

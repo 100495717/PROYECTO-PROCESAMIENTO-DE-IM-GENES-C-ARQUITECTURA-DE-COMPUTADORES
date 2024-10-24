@@ -32,7 +32,7 @@ public:
         pixels.resize(w * h);
     }
 
-    //Constructor que acepta una ruta de archivo
+    // Constructor que acepta una ruta de archivo
     ImageAos(const std::string& filename);
 
     

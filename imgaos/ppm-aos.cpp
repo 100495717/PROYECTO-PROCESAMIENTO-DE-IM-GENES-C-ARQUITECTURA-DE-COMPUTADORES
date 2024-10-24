@@ -31,8 +31,13 @@ ImageAos read_ppm(const std::string& filename) {
     image.max_color_value = maxval;
     image.pixels.resize(width * height);
 
+    // Comprobamos si los parámetros de la imagen son válidos
+    if (width <= 0 || height <= 0 || maxval <= 0) {
+        throw std::runtime_error("Parámetros de imagen no válidos");
+    }
+
     if(maxval < 256){
-        //Cada píxel está representado por 3 bytes
+        // Cada píxel está representado por 3 bytes
         for (int i= 0; i < width*height; ++i){
             unsigned char rgb[3];
             file.read(reinterpret_cast<char*>(rgb), 3);
