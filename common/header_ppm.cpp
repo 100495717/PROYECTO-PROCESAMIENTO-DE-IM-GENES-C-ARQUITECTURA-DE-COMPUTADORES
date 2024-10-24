@@ -3,6 +3,7 @@
 
 PPMHeader read_ppm_header(BinaryReader& reader) {
     PPMHeader header;
+
     // Leer el número mágico (debe ser "P6")
     header.magic = reader.read_ascii_string(2);
     if (header.magic != "P6") {
@@ -25,4 +26,20 @@ PPMHeader read_ppm_header(BinaryReader& reader) {
     reader.skip();
 
     return header;
+}
+
+void write_ppm_header(BinaryWriter& writer, const PPMHeader& header) {
+    // Escribimos el número mágico "P6"
+    writer.write_ascii_string("P6");
+    writer.write_newline();
+
+    // Escribimos la anchura y altura como enteros en ASCII
+    writer.write_ascii_int(header.width);
+    writer.write_whitespace();
+    writer.write_ascii_int(header.height);
+    writer.write_newline();
+
+    // Escribimos el valor máximo de color
+    writer.write_ascii_int(header.max_color_value);
+    writer.write_newline();
 }

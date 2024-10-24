@@ -10,11 +10,7 @@
     pequeñas lo que hace que sean buenas candidadtas para inlining (el compilador reemplaza la llamada 
     a la función por el código de la función, lo que puede mejorar el rendimiento)
 */
-/*struct PPMHeader {
-    int width;
-    int height;
-    int max_color_value;
-};*/
+
 // Clase para leer datos binarios de un vector de bytes
 class BinaryReader {
 public:
@@ -102,9 +98,62 @@ private:
     size_t position;  // Posición actual en el buffer
 };
 
+// Clase para escribir datos binarios en un vector de bytes
+class BinaryWriter {
+public:
+
+/*
+OPTIMIZACION posible: Prealocar memoria en el constructor de BinaryWriter:
+BinaryWriter(size_t reserve_size = 0) : position(0) {
+    if (reserve_size > 0) {
+        data.reserve(reserve_size);
+    }
+}
+En el main:
+size_t expected_size = 3 * header.width * header.height +  tamaño estimado del header ;
+BinaryWriter writer(expected_size);
+*/
+    // Constructor que inicializa el buffer vacío
+
+    BinaryWriter(std::vector<uint8_t>& buffer) : data(buffer) {}
+
+    // Escribir un byte
+    void write_byte(uint8_t value) {
+        data.push_back(value);
+    }
+
+    // Escribir un entero en formato little-endian (2 bytes)
+    void write_word_le(uint16_t value) {
+        data.push_back(static_cast<uint8_t>(value & 0xFF));
+        data.push_back(static_cast<uint8_t>((value >> 8) & 0xFF));
+    }
+
+    // Escribir una cadena ASCII
+    void write_ascii_string(const std::string& str) {
+        data.insert(data.end(), str.begin(), str.end());
+    }
+
+    // Escribir un entero en formato ASCII
+    void write_ascii_int(int value) {
+        write_ascii_string(std::to_string(value));
+    }
+
+    // Escribir un carácter de espacio o nueva línea
+    void write_whitespace() {
+        write_byte(' ');
+    }
+
+    void write_newline() {
+        write_byte('\n');
+    }
+
+private:
+    std::vector<uint8_t>& data;  // Buffer donde escribimos los datos
+};
+
 void write_binary_file(const std::string& filename, const std::vector<uint8_t>& data);
 
 // uint8_t es un entero sin signo de 8 bits (1 byte)
 std::vector<uint8_t> read_binary_file(const std::string& filename);
 
-#endif 
+#endif

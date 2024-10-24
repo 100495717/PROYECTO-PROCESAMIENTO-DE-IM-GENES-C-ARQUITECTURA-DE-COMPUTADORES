@@ -50,4 +50,3 @@ void write_binary_file(const std::string& filename, const std::vector<uint8_t>& 
         throw std::runtime_error("Error: Fallo al escribir en el archivo: " + filename);
     }
 }
-

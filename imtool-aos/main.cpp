@@ -26,7 +26,7 @@ int main(int argc, char* argv[]){
         PPMHeader header = read_ppm_header(reader);
 
         // Leemos la imagen
-        ImageAos img = read_ppm(input);
+        ImageAos img = read_ppm(reader, header);
 
         // Hacer la operación
         // Si la operación es "info" imprimimos la información de la imagen
