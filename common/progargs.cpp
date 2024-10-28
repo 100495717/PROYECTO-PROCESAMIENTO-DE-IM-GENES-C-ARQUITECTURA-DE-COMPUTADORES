@@ -1,6 +1,7 @@
-#include "progars.hpp"
+#include "progargs.hpp"
 #include <stdexcept>
 #include <string>
+#include <iostream>
 
 // parse_arguments convierte los argumentos de argv[] en un vector de cadenas (std::vector<std::string>)
 std::vector<std::string> parse_arguments(int argc, char*argv[]){
@@ -37,18 +38,16 @@ std::vector<std::string> parse_arguments(int argc, char*argv[]){
         }
         
         //Pasamos maxsize de string a entero
-        try{
-             int maxlevel = std::stoi(args[4]);
+        
+        int maxlevel = std::stoi(args[4]);
 
         //Comprobamos que el valor de maxsize esta entre los valores permitidos
-        if(0>maxlevel>65535){
+        if (maxlevel>65535 || maxlevel<0){
             throw std::invalid_argument("Error: Invalid maxlevel: " + std::to_string(maxlevel));
         }
-        }
+        
 
-        catch(const std::invalid_argument& e){
-             ("Error: Invalid maxlevel" + args[4]);
-        }   
+          
     } 
     
     // Validdamos los argumentos para la operación "resize"
@@ -79,18 +78,17 @@ std::vector<std::string> parse_arguments(int argc, char*argv[]){
         }
         
         //Pasamos maxsize de string a entero
-        try{
-             int cutfreq = std::stoi(args[4]);
+        
+        int cutfreq = std::stoi(args[4]);
+    
 
         //Comprobamos que el valor de maxsize esta entre los valores permitidos
-        if(0>cutfreq){
+        if(cutfreq < 0){
             throw std::invalid_argument("Error: Invalid cutfreq: " + std::to_string(cutfreq));
         }
-        }
+        
 
-        catch(const std::invalid_argument& e){
-             ("Error: Invalid cutfreq" + args[4]);
-        }   
+        
     } 
     
 
@@ -115,9 +113,7 @@ std::vector<std::string> parse_arguments(int argc, char*argv[]){
     }
 
 
-
+    return args;
 
 
 }
-
-

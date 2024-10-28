@@ -1,5 +1,5 @@
 #include <iostream>
-#include "common/progars.hpp"
+#include "common/progargs.hpp"
 #include "../imgaos/ppm-aos.hpp"
 #include "imgaos/image-operations-aos.hpp"
 #include "common/binaryio.hpp"

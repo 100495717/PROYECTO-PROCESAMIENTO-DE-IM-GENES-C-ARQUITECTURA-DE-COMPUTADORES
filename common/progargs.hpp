@@ -1,5 +1,5 @@
-#ifndef PROGARS_HPP
-#define PROGARS_HPP
+#ifndef PROGARGS_HPP
+#define PROGARGS_HPP
 
 #include <string>
 #include <vector>
@@ -10,6 +10,6 @@
 std::vector<std::string> parse_arguments(int argc, char* argv[]);
 
 
-#endif //PROGARS_HPP
+#endif //PROGARGS_HPP
 
   
