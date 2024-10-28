@@ -1,13 +1,13 @@
 AccessModifierOffset: -2
 AlignAfterOpenBracket: Align
 AlignArrayOfStructures: Right
-AlignConsecutiveAssignments: 
+AlignConsecutiveAssignments:
   Enabled: true
   AcrossEmptyLines: false
   AcrossComments: false
   AlignCompound: true
   PadOperators: true
-AlignConsecutiveBitFields: 
+AlignConsecutiveBitFields:
   Enabled: true
   AcrossEmptyLines: false
   AcrossComments: false
@@ -17,7 +17,7 @@ AlignConsecutiveDeclarations: None
 AlignConsecutiveMacros: None
 AlignEscapedNewlines: Left
 AlignOperands: Align
-AlignTrailingComments: 
+AlignTrailingComments:
   Kind: Always
 AllowAllArgumentsOnNextLine: true
 AllowAllConstructorInitializersOnNextLine: true
@@ -62,7 +62,7 @@ BreakBeforeConceptDeclarations: Always
 BreakBeforeInlineASMColon: Always
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeColon
-BreakInheritanceList: AfetrComma
+BreakInheritanceList: AfterComma
 BreakStringLiterals: true
 ColumnLimit: 100
 CompactNamespaces: false
@@ -89,7 +89,7 @@ InsertBraces: true
 InsertNewlineAtEOF: false
 KeepEmptyLinesAtTheStartOfBlocks: false
 LambdaBodyIndentation: Signature
-Lenguage: Cpp
+Language: Cpp
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: All
 PPIndentWidth: 2
@@ -99,7 +99,7 @@ QualifierAlignment: Right
 ReferenceAlignment: Middle
 ReflowComments:  true
 RequiresClausePosition: OwnLine
-RequiresexpressionIndentation: OuterScope
+RequiresExpressionIndentation: OuterScope
 SeparateDefinitionBlocks: Always
 ShortNamespaceLines: 0
 SortIncludes: CaseInsensitive

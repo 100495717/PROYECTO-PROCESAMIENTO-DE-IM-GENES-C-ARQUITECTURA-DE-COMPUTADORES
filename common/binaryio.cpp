@@ -7,19 +7,20 @@
 std::vector<uint8_t> read_binary_file(const std::string& filename) {
     // Abrimos el archivo en modo binario (modo lectura)
     std::ifstream file(filename, std::ios::binary);
-    
     // Verificamos si el archivo se ha abierto correctamente
     if (!file) {
         throw std::runtime_error("Error: No se pudo abrir el archivo para lectura: " + filename);
     }
-
     // Mover el puntero de lectura al final de archivo
     file.seekg(0, std::ios::end);
     // Obtenemos la posición actual del puntero de lectura, que en este caso será el tamaño del archivo (porque estamos en el final)
     std::streamsize size = file.tellg();
+    // Verificar si el archivo está vacío
+    if (size == 0) {
+        throw std::runtime_error("Error: El archivo PPM está vacío: " + filename);
+    }
     // Movemos el puntero de lectura al inicio del archivo para comenzar a leer los datos
     file.seekg(0, std::ios::beg);
-
     // Creamos un buffer del tamaño del archivo
     std::vector<uint8_t> buffer(size);
     // Convertimos el buffer en un puntero a char y leemos los datos del archivo
@@ -28,7 +29,6 @@ std::vector<uint8_t> read_binary_file(const std::string& filename) {
     if (!file.read(reinterpret_cast<char*>(buffer.data()), size)) {
         throw std::runtime_error("Error: Fallo al leer el archivo: " + filename);
     }
-
     // Devolvemos el buffer con los datos binarios
     return buffer;
 }
@@ -37,16 +37,14 @@ std::vector<uint8_t> read_binary_file(const std::string& filename) {
 void write_binary_file(const std::string& filename, const std::vector<uint8_t>& data) {
     // Abrimos/creamos el archivo en modo binario (modo escritura)
     std::ofstream file(filename, std::ios::binary);
-
     // Verificamos si el archivo se abrió correctamente
     if (!file) {
         throw std::runtime_error("Error: No se pudo abrir el archivo para escritura: " + filename);
     }
-
     // Convertimos el vector de bytes (data) en un puntero a char y escribimos su contenido en el archivo
     // Hay que negar la regla para utilizar el reinterpret_cast
     // NOLINTNEXTLINE(cppcoreguidelines−pro−type−reinterpret−cast)
-    if (!file.write(reinterpret_cast<const char*>(data.data()), data.size())) {
+    if (!file.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()))) {
         throw std::runtime_error("Error: Fallo al escribir en el archivo: " + filename);
     }
 }

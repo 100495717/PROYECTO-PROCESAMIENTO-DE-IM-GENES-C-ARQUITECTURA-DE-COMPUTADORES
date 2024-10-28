@@ -6,17 +6,17 @@
 #include <cstdint>
 #include <stdexcept>
 
-/*  Implementamos esta clase directamente en la cabecera debido a que sus funciones son simples y 
-    pequeñas lo que hace que sean buenas candidadtas para inlining (el compilador reemplaza la llamada 
+/*  Implementamos esta clase directamente en la cabecera debido a que sus funciones son simples y
+    pequeñas lo que hace que sean buenas candidadtas para inlining (el compilador reemplaza la llamada
     a la función por el código de la función, lo que puede mejorar el rendimiento)
 */
 
 // Clase para leer datos binarios de un vector de bytes
 class BinaryReader {
 public:
-    // Constructor que alamcena el vector de bytes en una variable llamada data e inicializa la 
+    // Constructor que alamcena el vector de bytes en una variable llamada data e inicializa la
     // posición actual en el buffer a 0
-    BinaryReader(const std::vector<uint8_t>& buffer) : data(buffer), position(0) {}
+    explicit BinaryReader(const std::vector<uint8_t>& buffer) : data(buffer), position(0) {}
 
     // Función que lee un byte del buffer y lo devuelve
     unsigned char read_byte() {
@@ -39,16 +39,16 @@ public:
         // Avanzamos dos posiciones en el buffer
         position += 2;
         // Devolvemos el valor de los dos bytes combinados como un entero
+        return word;
     }
 
     // Leer una cadena ASCII de tamaño 'length'
     std::string read_ascii_string(size_t length) {
         // Comprobamos que estamos dentro de los límites del buffer
         if (position + length > data.size()) {
-            throw std::runtime_error("Lectura fuera de los límites del buffer");
+            throw std::out_of_range("Error: Position and length exceed data size");
         }
-        // Creamos una cadena a partir de los bytes en el rango dado por parámetro
-        std::string str(data.begin() + position, data.begin() + position + length);
+        std::string str(reinterpret_cast<const char*>(data.data() + position), length);
         // Avanzamos la posición actual en el buffer la cantidad de bytes leída
         position += length;
         // Devolvemos la cadena ASCII formada por los bytes leídos
@@ -63,15 +63,16 @@ public:
             num_str += static_cast<char>(data[position++]);
         }
         // Saltamos el espacio o salto de línea
-        position++;  
+        position++;
         // Devolvemos la cadena convertida a entero
         return std::stoi(num_str);
     }
 
-    // Función que salta bytes de espacios en blanco y comentarios 
+    // Función que salta bytes de espacios en blanco y comentarios
     void skip() {
         while (position < data.size()) {
-            char c = data[position];  // Leer el byte actual
+            unsigned char uc = data[position]; // Leer el byte actual como unsigned char
+            char c = static_cast<char>(uc); // Convertir explícitamente a char
             // Si es un espacio en blanco, tabulación o salto de línea
             if (isspace(c)) {
                 ++position;  // Avanzamos la posición para saltar el espacio
@@ -115,7 +116,7 @@ BinaryWriter writer(expected_size);
 */
     // Constructor que inicializa el buffer vacío
 
-    BinaryWriter(std::vector<uint8_t>& buffer) : data(buffer) {}
+    explicit BinaryWriter(std::vector<uint8_t>& buffer) : data(buffer) {}
 
     // Escribir un byte
     void write_byte(uint8_t value) {

@@ -1,11 +1,13 @@
 #include "header_ppm.hpp"
 #include <stdexcept>
+#include <iostream>
 
 PPMHeader read_ppm_header(BinaryReader& reader) {
     PPMHeader header;
 
     // Leer el número mágico (debe ser "P6")
     header.magic = reader.read_ascii_string(2);
+    std::cout << "Magic number: " << header.magic << std::endl;
     if (header.magic != "P6") {
         throw std::runtime_error("Formato de archivo PPM no válido (se esperaba 'P6')");
     }
@@ -13,10 +15,13 @@ PPMHeader read_ppm_header(BinaryReader& reader) {
     reader.skip();
     // Leer el ancho, alto y el valor máximo de color
     header.width = reader.read_ascii_int();
+    std::cout << "Width: " << header.width << std::endl;
     reader.skip();
     header.height = reader.read_ascii_int();
+    std::cout << "Height: " << header.height << std::endl;
     reader.skip();
     header.max_color_value = reader.read_ascii_int();
+    std::cout << "Max color value: " << header.max_color_value << std::endl;
 
     // Nos aseguramos de que el valor máximo de color esté en el rango de valores válidos
     if (header.max_color_value <= 0 || header.max_color_value >= 65536) {
