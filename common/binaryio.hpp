@@ -21,9 +21,9 @@ public:
     // Función que lee un byte del buffer y lo devuelve
     unsigned char read_byte() {
         // Comprobamos que estamos dentro de los límites del buffer
-        if (position >= data.size()) {
-            throw std::runtime_error("Lectura fuera de los límites del buffer");
-        }
+        //if (position >= data.size()) {
+          //  throw std::runtime_error("Lectura fuera de los límites del buffer");
+        //}
         // Avanzamos una posición en el buffer y devolvemos el byte en la posición anterior
         return data[position++];
     }
