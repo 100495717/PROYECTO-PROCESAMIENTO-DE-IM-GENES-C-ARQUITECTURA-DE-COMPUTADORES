@@ -6,10 +6,10 @@
 #include "common/header_ppm.hpp" // Imporartamos el BinaryReader y BinaryWriter
 
 // Función para leer un archivo PPM
-ImageAos read_ppm(BinaryReader& reader, const PPMHeader& header);
+ImageAos read_ppm_image(const std::string& filename);
 
 // Función para escribir un archivo PPM
-void write_ppm(BinaryWriter& writer, const ImageAos& image6);
+void write_ppm_image(const std::string& filename, const ImageAos& image);
 
 #endif // PPM_HPP
 

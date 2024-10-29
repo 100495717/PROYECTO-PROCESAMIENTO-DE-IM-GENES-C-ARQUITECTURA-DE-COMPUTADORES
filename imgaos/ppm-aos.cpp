@@ -1,12 +1,21 @@
 #include "ppm-aos.hpp"
 #include "imageaos.hpp"
+#include "common/binaryio.hpp"
+#include "common/header_ppm.hpp"
 #include <fstream>
 #include <stdexcept>
 #include <sstream>
 #include <iostream>
 
 
-ImageAos read_ppm(BinaryReader& reader, const PPMHeader& header) {
+ImageAos read_ppm_image(const std::string& filename) {
+
+    //Leer el archivo binario
+    std::vector<uint8_t> data = read_binary_file(filename);
+    BinaryReader reader(data);
+    // Leer el encabezado del archivo PPM
+    PPMHeader header = read_ppm_header(reader);
+    
     // Crear una instancia de ImageAos con la información de ancho, alto y max_color_value
     ImageAos image(header.width, header.height, header.max_color_value);
     // Leer los píxeles de acuerdo al valor máximo de color
@@ -36,43 +45,37 @@ ImageAos read_ppm(BinaryReader& reader, const PPMHeader& header) {
     return image;
 }
 
-void write_ppm(const std::string& filename, const ImageAos& image) {
-    std::ofstream file(filename, std::ios::binary);
-    if (!file) {
-        throw std::runtime_error("No se pudo abrir el archivo para escritura");
-    }
+void write_ppm_image(const std::string& filename, const ImageAos& image) {
+    // Crear un objeto BinaryWriter con un buffer vacío
+    std::vector<uint8_t> buffer;
+    BinaryWriter writer(buffer);
+    // Escribir el encabezado del archivo PPM
+    PPMHeader header;
+    header.magic = "P6";
+    header.width = image.width;
+    header.height = image.height;
+    header.max_color_value = image.max_color_value;
+    write_ppm_header(writer, header);
 
-    file << "P6\n" << image.width << " " << image.height << "\n" << image.max_color_value << "\n";
-
+    
     if (image.max_color_value < 256) {
         
         //Cada píxel está representado por 3 bytes
         for (const auto& pixel : image.pixels) {
-            unsigned char r = static_cast<unsigned char>(pixel.r);
-            unsigned char g = static_cast<unsigned char>(pixel.g);
-            unsigned char b = static_cast<unsigned char>(pixel.b);
-            file.write(reinterpret_cast<char*>(r), 1);
-            file.write(reinterpret_cast<char*>(g), 1);
-            file.write(reinterpret_cast<char*>(b), 1);
+            writer.write_byte(pixel.r);
+            writer.write_byte(pixel.g);
+            writer.write_byte(pixel.b);
         }
     } else {
+        // Cada píxel está representado por 6 bytes (2 bytes por color)
         for (const auto& pixel : image.pixels) {
-            unsigned short r = pixel.r;
-            unsigned short g = pixel.g;
-            unsigned short b = pixel.b;
-            file.write(reinterpret_cast<const char*>(&r), 2);
-            file.write(reinterpret_cast<const char*>(&g), 2);
-            file.write(reinterpret_cast<const char*>(&b), 2);
+            writer.write_word_le(pixel.r);
+            writer.write_word_le(pixel.g);
+            writer.write_word_le(pixel.b);
         }
     }
+    // Escribir los datos binarios en el archivo
+    write_binary_file(filename, buffer);
 }
 
 
-void write_ppm_image(BinaryWriter& writer, const ImageAos& image) {
-    for (const Pixel& pixel : image.pixels) {
-        // Escribir los tres componentes RGB de cada píxel
-        writer.write_byte(pixel.r);
-        writer.write_byte(pixel.g);
-        writer.write_byte(pixel.b);
-    }
-}
