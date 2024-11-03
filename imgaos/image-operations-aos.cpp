@@ -1,36 +1,56 @@
+
+
 #include "image-operations-aos.hpp"
 #include <iostream>
 #include <fstream>
+#include "pixel.hpp"
 #include <algorithm>
 #include <cmath>
 #include <vector>
 #include <map>
 #include <limits>
+#include <stdexcept>
+#include <unordered_map>
+#include <unordered_set>
 
+
+
+
+ 
 void print_image_info(const ImageAos& img){
     std::cout << "Ancho: " << img.width << std::endl;
     std::cout << "Alto: " << img.height << std::endl;
     std::cout << "Píxeles totales: " << img.pixels.size() << std::endl;
 
 }
+template <typename T>
+T clamp(T value, T min, T max) {
+    if (value < min) return min;
+    if (value > max) return max;
+    return value;
+}
 
-void max_level(ImageAos& img, int maxlevel){
-    double scale = static_cast<double>(maxlevel) / img.max_color_value;
+void max_level(ImageAos& img, int maxlevel) {
     // Verificar si el nivel máximo es válido
     if (maxlevel <= 0 || maxlevel > 65535) {
         throw std::invalid_argument("El nivel máximo debe ser mayor a cero y menor a 65535.");
     }
-    // Verificar si necesitamos cambiar la representacion de los pixeles
+
+    // Factor de escala
+    double scale = static_cast<double>(maxlevel) / img.max_color_value;
+
+    // Verificar si necesitamos cambiar la representación de los píxeles
     bool fromOneToTwoBytes = (img.max_color_value <= 255 && maxlevel > 255);
     bool fromTwoToOneBytes = (img.max_color_value > 255 && maxlevel <= 255);
 
     // Crear un nuevo vector de píxeles si es necesario cambiar la representación
     std::vector<Pixel> new_pixels;
-    if (fromOneToTwoBytes || fromTwoToOneBytes){
+    if (fromOneToTwoBytes || fromTwoToOneBytes) {
         new_pixels.resize(img.width * img.height);
     }
+
     // Iterar sobre los píxeles de la imagen
-    for (size_t i=0; i<img.pixels.size();++i){
+    for (size_t i = 0; i < img.pixels.size(); ++i) {
         int originalRed = img.pixels[i].r;
         int originalGreen = img.pixels[i].g;
         int originalBlue = img.pixels[i].b;
@@ -40,31 +60,31 @@ void max_level(ImageAos& img, int maxlevel){
         int newGreen = static_cast<int>(std::round(originalGreen * scale));
         int newBlue = static_cast<int>(std::round(originalBlue * scale));
 
-        if (fromOneToTwoBytes){
+        if (fromOneToTwoBytes) {
             // Convertir a 2 bytes por canal
+            new_pixels[i].r = newRed;
+            new_pixels[i].g = newGreen;
+            new_pixels[i].b = newBlue;
+        } else if (fromTwoToOneBytes) {
+            // Convertir a 1 byte por canal
             new_pixels[i].r = newRed & 0xFF;
             new_pixels[i].g = newGreen & 0xFF;
             new_pixels[i].b = newBlue & 0xFF;
-        }
-        else if (fromTwoToOneBytes){
-            // Convertir a 1 byte por canal
-            new_pixels[i].r = static_cast<unsigned char>(newRed);
-            new_pixels[i].g = static_cast<unsigned char>(newGreen);
-            new_pixels[i].b = static_cast<unsigned char>(newBlue);
-        }
-        else{
+        } else {
             // Mantener la representación original
-            img.pixels[i].r = static_cast<unsigned char>(newRed);
-            img.pixels[i].g = static_cast<unsigned char>(newGreen);
-            img.pixels[i].b = static_cast<unsigned char>(newBlue);
+            img.pixels[i].r = newRed;
+            img.pixels[i].g = newGreen;
+            img.pixels[i].b = newBlue;
         }
     }
-    // Actualizar el nivel máximo de la imagen
-    if (fromOneToTwoBytes || fromTwoToOneBytes){
-        img.pixels = std::move(new_pixels);
-    }
+
+    // Actualizar el nivel máximo de color de la imagen
     img.max_color_value = maxlevel;
 
+    // Si cambiamos la representación, actualizamos los píxeles
+    if (fromOneToTwoBytes || fromTwoToOneBytes) {
+        img.pixels = std::move(new_pixels);
+    }
 }
 
 void resize_image(ImageAos& img, int width, int height){
@@ -91,7 +111,7 @@ void resize_image(ImageAos& img, int width, int height){
 }
 
 // Función auxiliar para calcular la distancia euclídea entre dos píxeles
-double color_distance(const Pixel& a, const Pixel& b){
+double color_distance(const Pixel& a, const Pixel& b) {
     return std::sqrt(std::pow(a.r - b.r, 2) + std::pow(a.g - b.g, 2) + std::pow(a.b - b.b, 2));
 }
 
@@ -112,51 +132,52 @@ Pixel find_closest_pixel(const Pixel& target, const std::vector<Pixel>& pixels) 
 
 void cut_least_freq(ImageAos& img, int n) {
     // Paso 1: Determinar la frecuencia de cada color
-    std::map<Pixel, int> freq_map;
+    std::unordered_map<Pixel, int> freq_map;
     for (const auto& pixel : img.pixels) {
         freq_map[pixel]++;
     }
+
     // Comprobamos si 'n' es válido
     if (n <= 0) {
         throw std::invalid_argument("El número de colores a eliminar debe ser mayor que cero.");
     }
-    if (n > freq_map.size()) {
+    if (static_cast<size_t>(n) > freq_map.size()) {
         throw std::invalid_argument("El número de colores a eliminar no puede ser mayor que el número de colores únicos en la imagen.");
     }
+
     // Paso 2: Identificar los n colores menos frecuentes
     std::vector<std::pair<Pixel, int>> freq_vec(freq_map.begin(), freq_map.end());
-    std::sort(freq_vec.begin(), freq_vec.end(), [](const auto& a, const auto& b) {
+    std::partial_sort(freq_vec.begin(), freq_vec.begin() + n, freq_vec.end(), [](const auto& a, const auto& b) {
         return a.second < b.second;
     });
-    // Crear un vector de los colores menos frecuentes
-    std::vector<Pixel> least_freq_pixels;
-    for (int i = 0; i < n && i < freq_vec.size(); ++i) {
-        least_freq_pixels.push_back(freq_vec[i].first);
+
+    // Crear un conjunto de los colores menos frecuentes
+    std::unordered_set<Pixel> least_freq_pixels;
+    for (int i = 0; i < n && static_cast<size_t>(i) < freq_vec.size(); ++i) {
+        least_freq_pixels.insert(freq_vec[i].first);
     }
-    // Mensaje de depuración: Imprimir los colores menos frecuentes
-    std::cout << "Colores menos frecuentes:" << std::endl;
-    for (const auto& pixel : least_freq_pixels) {
-        std::cout << "(" << static_cast<int>(pixel.r) << ", " << static_cast<int>(pixel.g) << ", " << static_cast<int>(pixel.b) << ")" << std::endl;
-    }
+
     // Paso 3: Reemplazar los colores menos frecuentes por el color más cercano restante
     std::vector<Pixel> remaining_pixels;
     for (const auto& [pixel, _] : freq_map) {
-        if (std::find(least_freq_pixels.begin(), least_freq_pixels.end(), pixel) == least_freq_pixels.end()) {
+        if (least_freq_pixels.find(pixel) == least_freq_pixels.end()) {
             remaining_pixels.push_back(pixel);
         }
     }
+
+    // Crear un mapa de reemplazo para evitar cálculos redundantes
+    std::unordered_map<Pixel, Pixel> replacement_map;
+    for (const auto& pixel : least_freq_pixels) {
+        replacement_map[pixel] = find_closest_pixel(pixel, remaining_pixels);
+    }
+
+    // Reemplazar los colores menos frecuentes en la imagen
     for (auto& pixel : img.pixels) {
-        if (std::find(least_freq_pixels.begin(), least_freq_pixels.end(), pixel) != least_freq_pixels.end()) {
-            Pixel old_pixel = pixel;
-            pixel = find_closest_pixel(pixel, remaining_pixels);
-            // Mensaje de depuración: Imprimir el reemplazo de color
-            std::cout << "Reemplazando color (" << static_cast<int>(old_pixel.r) << ", " << static_cast<int>(old_pixel.g) << ", " << static_cast<int>(old_pixel.b) << ") "
-                      << "por (" << static_cast<int>(pixel.r) << ", " << static_cast<int>(pixel.g) << ", " << static_cast<int>(pixel.b) << ")" << std::endl;
+        if (replacement_map.find(pixel) != replacement_map.end()) {
+            pixel = replacement_map[pixel];
         }
     }
-    
 }
-
 void compress_image(const ImageAos& img, const std::string& output) {
     // Crear un archivo binario para escribir los datos comprimidos
     std::ofstream file(output, std::ios::binary);
@@ -164,7 +185,7 @@ void compress_image(const ImageAos& img, const std::string& output) {
         throw std::runtime_error("Error: No se pudo abrir el archivo " + output);
     }
     // Escribir un encabezado simple para el archivo comprimido
-    file << "C6\n" << img.width << " " << img.height << "\n";
+    file << "C6\n" << img.width << " " << img.height << " " << img.max_color_value << "\n";
 
     // Escribir los datos de los píxeles comprimidos, simplemente se copian los datos
     std::map<Pixel, int> freq_map;

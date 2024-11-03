@@ -2,8 +2,8 @@
 #define PPM_HPP
 
 #include <string>
-#include "imgaos/imageaos.hpp" // Cambiar a la estructura de datos correspondiente
-#include "common/header_ppm.hpp" // Imporartamos el BinaryReader y BinaryWriter
+#include "imageaos.hpp" // Cambiar a la estructura de datos correspondiente
+#include "header_ppm.hpp" // Imporartamos el BinaryReader y BinaryWriter
 
 // Función para leer un archivo PPM
 ImageAos read_ppm_image(const std::string& filename);

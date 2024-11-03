@@ -1,7 +1,7 @@
 #ifndef IMAGE_OPERATIONS_HPP
 #define IMAGE_OPERATIONS_HPP
 
-#include "../imgaos/ppm-aos.hpp"
+#include "ppm-aos.hpp"
 
 void print_image_info(const ImageAos& img);
 void max_level(ImageAos& img, int maxlevel);

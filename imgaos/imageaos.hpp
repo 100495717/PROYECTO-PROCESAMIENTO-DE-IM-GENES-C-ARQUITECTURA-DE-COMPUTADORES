@@ -3,19 +3,8 @@
 
 #include <vector>
 #include <string>
-
-struct Pixel {
-    unsigned char r, g, b;
-    // Definir el operador <
-    bool operator<(const Pixel& other) const {
-        return std::tie(r, g, b) < std::tie(other.r, other.g, other.b);
-    }
-
-    // Definir el operador ==
-    bool operator==(const Pixel& other) const {
-        return std::tie(r, g, b) == std::tie(other.r, other.g, other.b);
-    }
-};
+#include <tuple>
+#include "pixel-aos.hpp"
 
 class ImageAos {
 public:
