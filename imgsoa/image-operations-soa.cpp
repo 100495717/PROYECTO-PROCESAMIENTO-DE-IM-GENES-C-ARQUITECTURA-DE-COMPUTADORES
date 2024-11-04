@@ -16,95 +16,54 @@ void print_image_info_soa(const ImageSoa& img) {
 }
 
 
-//FUNCION MAXLEVEL: ESCALADO DE INTENSIDAD
-void max_level_soa(ImageSoa& img, int maxlevel) {
-    //Calculamos el factor de escalado como un valor de coma flotante
-    float scalingFactor = float(maxLevel) / img.max_color_value;
+void max_level(ImageSoa& img, int maxlevel) {
+    //Comprobamos que el nuevo max level es correcto
+    if (maxlevel <= 0 || maxlevel > 65535) {
+        throw std::invalid_argument("El nivel máximo debe ser mayor a cero y menor o igual a 65535.");
+    }
 
-    //Determinamos si tenemos que cambiar la representación de los pixeles
-    bool fromOneToTwoBytes = (img.max_color_value<256 && maxlevel>=256);
-    bool fromTwoToOneByte = (img.max_color_value>=256 && maxlevel<256);
+    //Si el nuevo max level coincide con el de la imagen, devolvemos la imagen tal cual
+    if (img.max_color_value == maxlevel) {
+        std::cout << "El valor máximo ya coincide con el valor deseado. No se necesita escalado." << std::endl;
+        return;
+    }
 
-    //Creamos vectores para almacenar los nuevos valores RGB escalados
-    std::vector<unsigned char> newRedChannel;
-    std::vector<unsigned char> newGreenChannel;
-    std:vector<unsigned char> newBlueChannel;
-    
-     //Recorremos todos los píxeles de la imagen original
-    for (int i = 0; i < image.width * image.height; ++i) {
-        int originalRed, originalGreen, originalBlue;
+    // Calculamos el factor de escalado
+    double scale = static_cast<double>(maxlevel) / img.max_color_value;
+    std::cout << "Factor de escala calculado: " << scale << std::endl;
 
-        // Si la imagen original estaba en formato de 2 bytes por canal (maxColorValue >= 256)
-        if (wasUsingTwoBytes) {
-            // Convertir los dos bytes por canal en un único valor de 16 bits (little-endian)
-            originalRed = image.redChannel[2 * i] | (image.redChannel[2 * i + 1] << 8);
-            originalGreen = image.greenChannel[2 * i] | (image.greenChannel[2 * i + 1] << 8);
-            originalBlue = image.blueChannel[2 * i] | (image.blueChannel[2 * i + 1] << 8);
-        } else {
-            // Si la imagen original usaba 1 byte por canal
-            originalRed = image.redChannel[i];
-            originalGreen = image.greenChannel[i];
-            originalBlue = image.blueChannel[i];
+    // Calculamos el nuevo valor de cada pixel (RGB)
+    for (size_t i = 0; i < img.redChannel.size(); ++i) {
+        if (i < 10) {
+            std::cout << "[Antes del escalado] Pixel " << i
+                      << " - R: " << img.redChannel[i]
+                      << ", G: " << img.greenChannel[i]
+                      << ", B: " << img.blueChannel[i] << std::endl;
         }
 
-        // Escalamos los valores de los canales RGB con el nuevo valor máximo
-        int newRed = static_cast<int>(round(originalRed * scalingFactor));
-        int newGreen = static_cast<int>(round(originalGreen * scalingFactor));
-        int newBlue = static_cast<int>(round(originalBlue * scalingFactor));
+        //Para evitar desbordamientos, nos aseguramos de que los nuevos valores no excedan el limite(65535)
+        int scaledRed = std::min(static_cast<int>(std::floor(img.redChannel[i] * scale)), 65535);
+        int scaledGreen = std::min(static_cast<int>(std::floor(img.greenChannel[i] * scale)), 65535);
+        int scaledBlue = std::min(static_cast<int>(std::floor(img.blueChannel[i] * scale)), 65535);
 
-        // Si estamos cambiando de 2 bytes por canal a 1 byte por canal (nuevo maxVal < 256)
-        if (willUseOneByte) {
-            // Reducir a 1 byte por canal, escribimos solo el byte menos significativo (LSB)
-            newRedChannel.push_back(static_cast<unsigned char>(newRed));
-            newGreenChannel.push_back(static_cast<unsigned char>(newGreen));
-            newBlueChannel.push_back(static_cast<unsigned char>(newBlue));
-        } else {
-            // Si el nuevo valor máximo es mayor o igual a 256, usar 2 bytes por canal
-            newRedChannel.push_back(newRed & 0xFF);        // Primer byte (LSB)
-            newRedChannel.push_back((newRed >> 8) & 0xFF); // Segundo byte (MSB)
-            newGreenChannel.push_back(newGreen & 0xFF);
-            newGreenChannel.push_back((newGreen >> 8) & 0xFF);
-            newBlueChannel.push_back(newBlue & 0xFF);
-            newBlueChannel.push_back((newBlue >> 8) & 0xFF);
+        //Utilizamos unsigned short para que podamos representar (0-65535)
+        img.redChannel[i] = static_cast<unsigned short>(scaledRed);
+        img.greenChannel[i] = static_cast<unsigned short>(scaledGreen);
+        img.blueChannel[i] = static_cast<unsigned short>(scaledBlue);
+
+        if (i < 10) {
+            std::cout << "[Después del escalado] Pixel " << i
+                      << " - R: " << img.redChannel[i]
+                      << ", G: " << img.greenChannel[i]
+                      << ", B: " << img.blueChannel[i] << std::endl;
         }
     }
 
-    // Abrimos el archivo de salida en modo binario
-    std::ofstream outFile(outputFile, std::ios::binary);
-   
-    // Escribir los metadatos de la imagen en el archivo PPM
-    outFile << "P6\n" << image.width << " " << image.height << "\n" << newMaxLevel << "\n";
-
-    // Escribir los nuevos píxeles escalados en el archivo
-    if (willUseOneByte) {
-        // Escribir los datos si el nuevo formato es de 1 byte por canal
-        for (int i = 0; i < newRedChannel.size(); ++i) {
-            outFile.put(newRedChannel[i]);
-        }
-        for (int i = 0; i < newGreenChannel.size(); ++i) {
-            outFile.put(newGreenChannel[i]);
-        }
-        for (int i = 0; i < newBlueChannel.size(); ++i) {
-            outFile.put(newBlueChannel[i]);
-        }
-    } else {
-        // Escribir los datos si el nuevo formato es de 2 bytes por canal
-        for (int i = 0; i < newRedChannel.size(); ++i) {
-            outFile.put(newRedChannel[i]);
-        }
-        for (int i = 0; i < newGreenChannel.size(); ++i) {
-            outFile.put(newGreenChannel[i]);
-        }
-        for (int i = 0; i < newBlueChannel.size(); ++i) {
-            outFile.put(newBlueChannel[i]);
-        }
-    }
-
-    // Cerramos el archivo de salida
-    outFile.close();
-   
-    std::cout << "Escalado de intensidad completado. Imagen guardada en: " << outputFile << std::endl;
+    // Actualiza el valor máximo de color después del escalado
+    img.max_color_value = maxlevel;
+    std::cout << "Escalado completado con nuevo valor máximo: " << img.max_color_value << std::endl;
 }
+
 
 
 
