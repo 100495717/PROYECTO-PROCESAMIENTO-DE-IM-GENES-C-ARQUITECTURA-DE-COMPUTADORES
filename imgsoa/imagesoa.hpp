@@ -11,9 +11,9 @@ public:
     int width;
     int height;
     int max_color_value;
-    std::vector <int> redChannel;
-    std::vector <int> greenChannel;
-    std::vector <int> blueChannel;
+    std::vector <unsigned short> redChannel;
+    std::vector <unsigned short> greenChannel;
+    std::vector <unsigned short> blueChannel;
 };
 
 #endif // IMAGESOA_HPP
