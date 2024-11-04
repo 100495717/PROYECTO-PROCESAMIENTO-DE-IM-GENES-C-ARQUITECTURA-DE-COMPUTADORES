@@ -3,165 +3,121 @@
 #include <stdexcept>
 #include "imagesoa.hpp"
 
-ImageSoa read_ppm(const std::string& filename){
-    //Comprobamos que podemos abrir el archivo de entrada
-    std:: ifstream file(filename, std::ios::binary);
-    if(!file.is_open()){
-        throw std::runtime_error("No se pudo abrir el archivo para lectura");
+
+//readPPM y writePPM en plan cutre, no binario
+void readPPM(const std::string& filename, ImageSoa& img) {
+    std::ifstream file(filename, std::ios::binary);
+    if (!file) {
+        throw std::runtime_error("No se pudo abrir el archivo de entrada.");
     }
 
-    //Comprobamos que el formato es el correcto (P6)
-    std::string magic;
-    file >> magic;
-    if (magic != "P6"){
-        throw std::runtime_error("Formato de archivo no válido");
+    std::string format;
+    file >> format;
+    if (format != "P6") {
+        throw std::runtime_error("Formato de archivo no compatible. Se requiere P6.");
     }
 
-    //Leemos y guardamos los valores ancho alto y maxval
-    int width, height, maxval;
-    file >> width >> height >> maxval;
-    file.ignore(1); //Ignoramos el salto de linea despues del valor max
+    file >> img.width >> img.height >> img.max_color_value;
+    file.ignore();  // Ignora el carácter de nueva línea después del valor máximo de color
 
-    //Creamos un objeto de la clase ImageSoa
-    ImageSoa image;
-    image.width = width;
-    image.height = height;
-    image.max_color_value = maxval;
+    std::cout << "Leyendo imagen: " << filename << "\n"
+              << "Dimensiones: " << img.width << "x" << img.height << "\n"
+              << "Valor máximo de color: " << img.max_color_value << std::endl;
 
-    // Comprobamos si los parámetros de la imagen son válidos
-    if (width <= 0 || height <= 0 || maxval <= 0) {
-        throw std::runtime_error("Parámetros de imagen no válidos");
-    }
+    // Reserva espacio en los vectores según el número total de píxeles
+    img.redChannel.resize(img.width * img.height);
+    img.greenChannel.resize(img.width * img.height);
+    img.blueChannel.resize(img.width * img.height);
 
-    int numPixeles = width * height;
+    // Lectura de píxeles en función de si el valor máximo es mayor a 255 (16 bits) o no (8 bits)
+    if (img.max_color_value > 255) {
+        // Imagen de 16 bits por canal
+        for (size_t i = 0; i < img.width * img.height; ++i) {
+            unsigned char high_byte, low_byte;
 
-    //Redimensionamos los vectores (Arrays) 
-    image.redChannel.resize(numPixeles);
-    image.greenChannel.resize(numPixeles);
-    image.blueChannel.resize(numPixeles);
+            // Lee cada canal en dos bytes (16 bits)
+            file.read(reinterpret_cast<char*>(&high_byte), 1);
+            file.read(reinterpret_cast<char*>(&low_byte), 1);
+            img.redChannel[i] = (high_byte << 8) | low_byte;
 
+            file.read(reinterpret_cast<char*>(&high_byte), 1);
+            file.read(reinterpret_cast<char*>(&low_byte), 1);
+            img.greenChannel[i] = (high_byte << 8) | low_byte;
 
-    //Leemos y guardamos los pixeles (DEPENDE DEL MAXVAL)
-    if (maxval <= 255){
-        for(int i = 0; i<numPixeles; i++){
-            unsigned char r, g, b;
-            file.read(reinterpret_cast<char*>(&r), 1); //Leemos 1 byte para el rojo
-            file.read(reinterpret_cast<char*>(&g), 1); //Leemos 1 byte para el verde
-            file.read(reinterpret_cast<char*>(&b), 1); //Leemos 1 byte para el azul
+            file.read(reinterpret_cast<char*>(&high_byte), 1);
+            file.read(reinterpret_cast<char*>(&low_byte), 1);
+            img.blueChannel[i] = (high_byte << 8) | low_byte;
 
-            image.redChannel[i] = static_cast<int>(r); //Lo convertimos a entero y guardamos
-            image.greenChannel[i] = static_cast<int>(g);
-            image.blueChannel[i] = static_cast<int>(b);
-
-        }
-    }
-    else{
-    //Si maxval > 255 utilizamos dos bytes para cada pixel
-        for(int i = 0; i<numPixeles; i++){
-            unsigned char r1, r2, g1, g2, b1, b2;
-            file.read(reinterpret_cast<char*>(&r1), 1); //Leemos el primer byte para el rojo
-            file.read(reinterpret_cast<char*>(&r2), 1); //Leemos el segundo byte para el rojo
-            file.read(reinterpret_cast<char*>(&g1), 1);
-            file.read(reinterpret_cast<char*>(&g2), 1); 
-            file.read(reinterpret_cast<char*>(&b1), 1); 
-            file.read(reinterpret_cast<char*>(&b2), 1);
-
-            //Combinamos los 2 bytes para formar el valo de 16 bits
-            image.redChannel[i] = static_cast<int>(r1 | (r2 << 8)); //Lo convertimos a entero y guardamos
-            image.greenChannel[i] = static_cast<int>(g1 | (g2 << 8));
-            image.blueChannel[i] = static_cast<int>(b1 | (b2 << 8));
-
-        }
-    }
-
-    void savePPM(const std::string& outputFile, const ImageSOA& image) {
-    std::ofstream file(outputFile, std::ios::binary);  // Abrir el archivo en modo binario
-   
-    if (!file.is_open()) {
-        std::cerr << "No se pudo abrir el archivo para escribir: " << outputFile << std::endl;
-        exit(1);
-    }
-   
-    // Escribir el encabezado PPM
-    file << "P6\n" << image.width << " " << image.height << "\n" << image.maxColorValue << "\n";
-   
-    int pixelCount = image.width * image.height;
-   
-    if (image.maxColorValue <= 255) {
-        // Si el valor máximo es <= 255, cada canal usa 1 byte por píxel
-        for (int i = 0; i < pixelCount; ++i) {
-            unsigned char r = static_cast<unsigned char>(image.redChannel[i]);
-            unsigned char g = static_cast<unsigned char>(image.greenChannel[i]);
-            unsigned char b = static_cast<unsigned char>(image.blueChannel[i]);
-           
-            file.write(reinterpret_cast<char*>(&r), 1);  // Escribir 1 byte para el rojo
-            file.write(reinterpret_cast<char*>(&g), 1);  // Escribir 1 byte para el verde
-            file.write(reinterpret_cast<char*>(&b), 1);  // Escribir 1 byte para el azul
+            if (i < 10) {
+                std::cout << "[Debug] Pixel " << i
+                          << " - R: " << img.redChannel[i]
+                          << ", G: " << img.greenChannel[i]
+                          << ", B: " << img.blueChannel[i] << std::endl;
+            }
         }
     } else {
-        // Si el valor máximo es > 255, cada canal usa 2 bytes por píxel (little-endian)
-        for (int i = 0; i < pixelCount; ++i) {
-            unsigned char r1 = image.redChannel[i] & 0xFF;       // Primer byte del rojo
-            unsigned char r2 = (image.redChannel[i] >> 8) & 0xFF; // Segundo byte del rojo
-            unsigned char g1 = image.greenChannel[i] & 0xFF;     // Primer byte del verde
-            unsigned char g2 = (image.greenChannel[i] >> 8) & 0xFF; // Segundo byte del verde
-            unsigned char b1 = image.blueChannel[i] & 0xFF;      // Primer byte del azul
-            unsigned char b2 = (image.blueChannel[i] >> 8) & 0xFF; // Segundo byte del azul
-           
-            file.write(reinterpret_cast<char*>(&r1), 1);  // Escribir el primer byte del rojo
-            file.write(reinterpret_cast<char*>(&r2), 1);  // Escribir el segundo byte del rojo
-            file.write(reinterpret_cast<char*>(&g1), 1);  // Escribir el primer byte del verde
-            file.write(reinterpret_cast<char*>(&g2), 1);  // Escribir el segundo byte del verde
-            file.write(reinterpret_cast<char*>(&b1), 1);  // Escribir el primer byte del azul
-            file.write(reinterpret_cast<char*>(&b2), 1);  // Escribir el segundo byte del azul
+        // Imagen de 8 bits por canal
+        for (size_t i = 0; i < img.width * img.height; ++i) {
+            unsigned char red, green, blue;
+
+            // Lee cada canal en un solo byte (8 bits) y convierte a `unsigned short`
+            file.read(reinterpret_cast<char*>(&red), 1);
+            file.read(reinterpret_cast<char*>(&green), 1);
+            file.read(reinterpret_cast<char*>(&blue), 1);
+
+            img.redChannel[i] = static_cast<unsigned short>(red);
+            img.greenChannel[i] = static_cast<unsigned short>(green);
+            img.blueChannel[i] = static_cast<unsigned short>(blue);
+
+            if (i < 10) {
+                std::cout << "[Debug] Pixel " << i
+                          << " - R: " << img.redChannel[i]
+                          << ", G: " << img.greenChannel[i]
+                          << ", B: " << img.blueChannel[i] << std::endl;
+            }
         }
     }
-}
+
+    file.close();
+    std::cout << "Lectura completada con éxito." << std::endl;
 }
 
-//Creamos una funcion para guardar la imagen en un archivo PPM
-void savePPM(const std::string& outputFile, const ImageSOA& image) {
-    std::ofstream file(outputFile, std::ios::binary);  // Abrir el archivo en modo binario
-   
-    if (!file.is_open()) {
-        std::cerr << "No se pudo abrir el archivo para escribir: " << outputFile << std::endl;
-        exit(1);
+void writePPM(const std::string& filename, const ImageSoa& img) {
+    std::ofstream file(filename, std::ios::binary);
+    if (!file) {
+        throw std::runtime_error("No se pudo abrir el archivo de salida.");
     }
-   
-    // Escribir el encabezado PPM
-    file << "P6\n" << image.width << " " << image.height << "\n" << image.maxColorValue << "\n";
-   
-    int pixelCount = image.width * image.height;
-   
-    if (image.maxColorValue <= 255) {
-        // Si el valor máximo es <= 255, cada canal usa 1 byte por píxel
-        for (int i = 0; i < pixelCount; ++i) {
-            unsigned char r = static_cast<unsigned char>(image.redChannel[i]);
-            unsigned char g = static_cast<unsigned char>(image.greenChannel[i]);
-            unsigned char b = static_cast<unsigned char>(image.blueChannel[i]);
-           
-            file.write(reinterpret_cast<char*>(&r), 1);  // Escribir 1 byte para el rojo
-            file.write(reinterpret_cast<char*>(&g), 1);  // Escribir 1 byte para el verde
-            file.write(reinterpret_cast<char*>(&b), 1);  // Escribir 1 byte para el azul
+
+    // Encabezado PPM
+    file << "P6\n" << img.width << " " << img.height << "\n" << img.max_color_value << "\n";
+    std::cout << "Escribiendo imagen escalada en: " << filename << "\n"
+              << "Dimensiones: " << img.width << "x" << img.height << "\n"
+              << "Valor máximo de color (escalado): " << img.max_color_value << std::endl;
+
+    for (size_t i = 0; i < img.redChannel.size(); ++i) {
+        if (img.max_color_value > 255) {
+            // Imagen de 16 bits por canal
+            file.put(static_cast<char>(img.redChannel[i] >> 8));
+            file.put(static_cast<char>(img.redChannel[i] & 0xFF));
+            file.put(static_cast<char>(img.greenChannel[i] >> 8));
+            file.put(static_cast<char>(img.greenChannel[i] & 0xFF));
+            file.put(static_cast<char>(img.blueChannel[i] >> 8));
+            file.put(static_cast<char>(img.blueChannel[i] & 0xFF));
+        } else {
+            // Imagen de 8 bits por canal
+            file.put(static_cast<char>(img.redChannel[i]));
+            file.put(static_cast<char>(img.greenChannel[i]));
+            file.put(static_cast<char>(img.blueChannel[i]));
         }
-    } else {
-        // Si el valor máximo es > 255, cada canal usa 2 bytes por píxel (little-endian)
-        for (int i = 0; i < pixelCount; ++i) {
-            unsigned char r1 = image.redChannel[i] & 0xFF;       // Primer byte del rojo
-            unsigned char r2 = (image.redChannel[i] >> 8) & 0xFF; // Segundo byte del rojo
-            unsigned char g1 = image.greenChannel[i] & 0xFF;     // Primer byte del verde
-            unsigned char g2 = (image.greenChannel[i] >> 8) & 0xFF; // Segundo byte del verde
-            unsigned char b1 = image.blueChannel[i] & 0xFF;      // Primer byte del azul
-            unsigned char b2 = (image.blueChannel[i] >> 8) & 0xFF; // Segundo byte del azul
-           
-            file.write(reinterpret_cast<char*>(&r1), 1);  // Escribir el primer byte del rojo
-            file.write(reinterpret_cast<char*>(&r2), 1);  // Escribir el segundo byte del rojo
-            file.write(reinterpret_cast<char*>(&g1), 1);  // Escribir el primer byte del verde
-            file.write(reinterpret_cast<char*>(&g2), 1);  // Escribir el segundo byte del verde
-            file.write(reinterpret_cast<char*>(&b1), 1);  // Escribir el primer byte del azul
-            file.write(reinterpret_cast<char*>(&b2), 1);  // Escribir el segundo byte del azul
+
+        if (i < 10) {
+            std::cout << "[Debug] Pixel escrito " << i 
+                      << " - R: " << img.redChannel[i]
+                      << ", G: " << img.greenChannel[i]
+                      << ", B: " << img.blueChannel[i] << std::endl;
         }
     }
+
+    file.close();
+    std::cout << "Escalado completado. Imagen guardada en " << filename << std::endl;
 }
-
-
