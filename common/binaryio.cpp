@@ -1,50 +1,100 @@
 #include "binaryio.hpp"
-// Necesario para la lectura y escritura de archivos
 #include <fstream>
-#include <stdexcept>
 
-// Función que toma como argumento el nombre de un archivo y devuelve los datos en un vector de bytes
-std::vector<uint8_t> read_binary_file(const std::string& filename) {
-    // Abrimos el archivo en modo binario (modo lectura)
-    std::ifstream file(filename, std::ios::binary);
-    // Verificamos si el archivo se ha abierto correctamente
-    if (!file) {
-        throw std::runtime_error("Error: No se pudo abrir el archivo para lectura: " + filename);
-    }
-    // Mover el puntero de lectura al final de archivo
-    file.seekg(0, std::ios::end);
-    // Obtenemos la posición actual del puntero de lectura, que en este caso será el tamaño del archivo (porque estamos en el final)
-    std::streamsize size = file.tellg();
-    // Verificar si el archivo está vacío
-    if (size == 0) {
-        throw std::runtime_error("Error: El archivo PPM está vacío: " + filename);
-    }
-    // Movemos el puntero de lectura al inicio del archivo para comenzar a leer los datos
-    file.seekg(0, std::ios::beg);
-    // Creamos un buffer del tamaño del archivo
-    std::vector<uint8_t> buffer(size);
-    // Convertimos el buffer en un puntero a char y leemos los datos del archivo
-    // Hay que negar la regla para utilizar el reinterpret_cast
-    // NOLINTNEXTLINE(cppcoreguidelines−pro−type−reinterpret−cast)
-    if (!file.read(reinterpret_cast<char*>(buffer.data()), size)) {
-        throw std::runtime_error("Error: Fallo al leer el archivo: " + filename);
-    }
-    // Devolvemos el buffer con los datos binarios
-    return buffer;
+
+BinaryReader::BinaryReader(const std::vector<uint8_t>& buffer)
+    : buffer_(buffer), position_(0) {}
+
+uint8_t BinaryReader::read_uint8() {
+   
+    return buffer_[position_++];
 }
 
-// Función que dado un vector de bytes y un nombre de archivo, escribe los datos binarios en el archivo
-void write_binary_file(const std::string& filename, const std::vector<uint8_t>& data) {
-    // Abrimos/creamos el archivo en modo binario (modo escritura)
-    std::ofstream file(filename, std::ios::binary);
-    // Verificamos si el archivo se abrió correctamente
-    if (!file) {
-        throw std::runtime_error("Error: No se pudo abrir el archivo para escritura: " + filename);
+uint16_t BinaryReader::read_uint16() {
+   
+    uint16_t value = (buffer_[position_] << 8) | buffer_[position_ + 1];
+    position_ += 2;
+    return value;
+}
+
+std::string BinaryReader::read_string() {
+    std::string result;
+    while (position_ < buffer_.size() && buffer_[position_] != ' ' && buffer_[position_] != '\n') {
+        result += static_cast<char>(buffer_[position_++]);
     }
-    // Convertimos el vector de bytes (data) en un puntero a char y escribimos su contenido en el archivo
-    // Hay que negar la regla para utilizar el reinterpret_cast
-    // NOLINTNEXTLINE(cppcoreguidelines−pro−type−reinterpret−cast)
-    if (!file.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()))) {
-        throw std::runtime_error("Error: Fallo al escribir en el archivo: " + filename);
+    return result;
+}
+
+// Función que salta bytes de espacios en blanco y comentarios
+void BinaryReader::skip() {
+    while (position_ < buffer_.size()) {
+        unsigned char uc = buffer_[position_];
+        char c = static_cast<char>(uc);
+
+        // Si es un espacio en blanco o tabulación o salto de línea
+        if (isspace(c)) {
+            ++position_;
+        }
+        // Si es un comentario
+        else if (c == '#') {
+            // Avanzar hasta el final de la línea
+            while (position_ < buffer_.size() && buffer_[position_] != '\n') {
+                ++position_;
+            }
+            if (position_ < buffer_.size() && buffer_[position_] == '\n') {
+                ++position_; // Saltar también el salto de línea
+            }
+        }
+        // Si no es espacio ni comentario, salimos del bucle
+        else {
+            break;
+        }
     }
+}
+
+int BinaryReader::read_ascii_int() {
+    std::string result;
+    while (position_ < buffer_.size() && isdigit(buffer_[position_])) {
+        result += static_cast<char>(buffer_[position_++]);
+    }
+    return std::stoi(result);
+}
+
+bool BinaryReader::eof() const {
+    return position_ >= buffer_.size();
+}
+
+BinaryWriter::BinaryWriter(std::ofstream& output_stream)
+    : ofs_(output_stream) {
+    if (!ofs_) {
+        throw std::ios_base::failure("Error al abrir el archivo de salida");
+    }
+}
+
+void BinaryWriter::write_uint8(uint8_t value) const {
+    if (!ofs_) {
+        throw std::ios_base::failure("Error al escribir en el archivo de salida");
+    }
+    ofs_.write(reinterpret_cast<char*>(&value), sizeof(uint8_t));
+}
+
+void BinaryWriter::write_uint16(uint16_t value) const {
+    if (!ofs_) {
+        throw std::ios_base::failure("Error al escribir en el archivo de salida");
+    }
+    ofs_.write(reinterpret_cast<const char*>(&value), sizeof(uint16_t));
+}
+
+void BinaryWriter::write_string(const std::string& value) const {
+    if (!ofs_) {
+        throw std::ios_base::failure("Error al escribir en el archivo de salida");
+    }
+    ofs_.write(value.c_str(), static_cast<std::streamsize>(value.size()));
+}
+
+void BinaryWriter::write_ascii_int(int value) const {
+    if (!ofs_) {
+        throw std::ios_base::failure("Error al escribir en el archivo de salida");
+    }
+    ofs_ << value;
 }

@@ -73,7 +73,8 @@
         "cinttypes": "cpp",
         "variant": "cpp",
         "charconv": "cpp",
-        "format": "cpp"
+        "format": "cpp",
+        "future": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

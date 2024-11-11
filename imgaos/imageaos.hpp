@@ -6,6 +6,8 @@
 #include <tuple>
 #include "pixel-aos.hpp"
 
+// ImageAos  actúa como un "modelo" en memoria de la imagen original, adaptado para permitir un
+// procesamiento de imágenes más flexible y eficiente dentro del programa
 class ImageAos {
 public:
     int width;
@@ -22,9 +24,9 @@ public:
     }
 
     // Constructor que acepta una ruta de archivo
-    ImageAos(const std::string& filename);
+    explicit ImageAos(const std::string& filename);
 
-    
+
 };
 
 #endif // IMAGEAOS_HPP

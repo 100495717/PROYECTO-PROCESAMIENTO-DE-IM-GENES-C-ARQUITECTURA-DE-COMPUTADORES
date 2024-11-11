@@ -1,9 +1,8 @@
-
-
 #include "image-operations-aos.hpp"
+#include "binaryio.hpp"
 #include <iostream>
 #include <fstream>
-#include "pixel.hpp"
+#include "pixel-aos.hpp"
 #include <algorithm>
 #include <cmath>
 #include <vector>
@@ -13,10 +12,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-
-
-
- 
 void print_image_info(const ImageAos& img){
     std::cout << "Ancho: " << img.width << std::endl;
     std::cout << "Alto: " << img.height << std::endl;
@@ -101,7 +96,6 @@ void resize_image(ImageAos& img, int width, int height){
             int px = static_cast<int>(x * x_ratio);
             int py = static_cast<int>(y * y_ratio);
             new_pixels[y * width + x] = img.pixels[py * img.width + px];
-            
         }
     }
     // Actualizar las dimensiones y los píxeles de la imagen
@@ -130,7 +124,7 @@ Pixel find_closest_pixel(const Pixel& target, const std::vector<Pixel>& pixels) 
     return closest;
 }
 
-void cut_least_freq(ImageAos& img, int n) {
+void cut_freq(ImageAos& img, int n) {
     // Paso 1: Determinar la frecuencia de cada color
     std::unordered_map<Pixel, int> freq_map;
     for (const auto& pixel : img.pixels) {
@@ -178,16 +172,26 @@ void cut_least_freq(ImageAos& img, int n) {
         }
     }
 }
+
 void compress_image(const ImageAos& img, const std::string& output) {
     // Crear un archivo binario para escribir los datos comprimidos
-    std::ofstream file(output, std::ios::binary);
+    std::ofstream file(output + ".cppm", std::ios::binary);
     if (!file) {
-        throw std::runtime_error("Error: No se pudo abrir el archivo " + output);
+        throw std::runtime_error("Error: No se pudo abrir el archivo " + output + ".cppm");
     }
-    // Escribir un encabezado simple para el archivo comprimido
-    file << "C6\n" << img.width << " " << img.height << " " << img.max_color_value << "\n";
 
-    // Escribir los datos de los píxeles comprimidos, simplemente se copian los datos
+    BinaryWriter writer(file);
+
+    // Escribir un encabezado simple para el archivo comprimido
+    writer.write_string("C6 ");
+    writer.write_ascii_int(img.width);
+    writer.write_string(" ");
+    writer.write_ascii_int(img.height);
+    writer.write_string(" ");
+    writer.write_ascii_int(img.max_color_value);
+    writer.write_string(" ");
+
+    // Crear un mapa de frecuencia de colores y una lista de colores
     std::map<Pixel, int> freq_map;
     std::vector<Pixel> color_list;
     int color_index = 0;
@@ -197,39 +201,33 @@ void compress_image(const ImageAos& img, const std::string& output) {
             color_list.push_back(pixel);
         }
     }
+
     // Escribir el número de entradas de la tabla de colores
-    file << color_list.size() << "\n";
+    writer.write_ascii_int(static_cast<int>(color_list.size()));
+    writer.write_string("\n");
+
     // Escribir la tabla de colores
     for (const auto& pixel : color_list) {
-        if (img.max_color_value <= 255){
-            file.put(pixel.r);
-            file.put(pixel.g);
-            file.put(pixel.b);
-        }
-        else{
-            file.put(pixel.r >> 8);
-            file.put(pixel.r & 0xFF);
-            file.put(pixel.g >> 8);
-            file.put(pixel.g & 0xFF);
-            file.put(pixel.b >> 8);
-            file.put(pixel.b & 0xFF);
+        if (img.max_color_value <= 255) {
+            writer.write_uint8(static_cast<uint8_t>(pixel.r));
+            writer.write_uint8(static_cast<uint8_t>(pixel.g));
+            writer.write_uint8(static_cast<uint8_t>(pixel.b));
+        } else {
+            writer.write_uint16(pixel.r);
+            writer.write_uint16(pixel.g);
+            writer.write_uint16(pixel.b);
         }
     }
+
     // Escribir los índices de los colores
-    int index;
-    if (color_list.size() < 256){
-        index = 1;
-    } else if (color_list.size() < 65536){
-        index = 2;
-    } else {
-        index = 4;
-    }
-    for (const auto& pixel : img.pixels){
-        int indice = freq_map[pixel];
-        for (int i = 0; i < index; i++){
-            file.put((indice >> (i*8)) & 0xFF);
+    int index_size = (color_list.size() < 256) ? 1 : (color_list.size() < 65536) ? 2 : 4;
+    for (const auto& pixel : img.pixels) {
+        int index = freq_map[pixel];
+        for (int i = 0; i < index_size; ++i) {
+            writer.write_uint8(static_cast<uint8_t>((index >> (i * 8)) & 0xFF));
         }
     }
+
     // Verificar si hubo un error al escribir los datos comprimidos
     if (!file) {
         throw std::runtime_error("Error: Error al escribir los datos de los píxeles comprimidos.");

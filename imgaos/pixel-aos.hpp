@@ -6,9 +6,9 @@
 
 struct Pixel {
   
-    uint16_t r; // Cambiado a uint16_t para soportar 65535
-    uint16_t g;
-    uint16_t b;
+    uint16_t r = 0; // Cambiado a uint16_t para soportar 65535
+    uint16_t g = 0;
+    uint16_t b = 0;
 
 
     bool operator==(const Pixel& other) const {
@@ -20,15 +20,14 @@ struct Pixel {
     }
 };
 
-namespace std {
-    template <>
-    struct hash<Pixel> {
-        std::size_t operator()(const Pixel& p) const {
-            return (static_cast<std::size_t>(p.r) << 16) |
-                   (static_cast<std::size_t>(p.g) << 8) |
-                   static_cast<std::size_t>(p.b);
-        }
-    };
-}
+// Especialización de std::hash para Pixel
+template <>
+struct std::hash<Pixel> {
+    std::size_t operator()(const Pixel& p) const noexcept{
+        return (static_cast<std::size_t>(p.r) << 16) |
+               (static_cast<std::size_t>(p.g) << 8) |
+               static_cast<std::size_t>(p.b);
+    }
+};
 
-#endif // PIXEL_HPP
+#endif 

@@ -1,79 +1,95 @@
 #include "imageaos.hpp"
+#include "binaryio.hpp"
 #include <fstream>
 #include <iostream>
-#include <sstream>
 
-ImageAos read_ppm_image(const std::string& filename) {
+ImageAos read_ppm_image_aos(const std::string& filename) {
+    // Abrimos el archivo en modo binario para leer
     std::ifstream ifs(filename, std::ios::binary);
     if (!ifs) {
         std::cerr << "Error: No se pudo abrir el archivo para leer: " << filename << std::endl;
         return {};
     }
 
-    std::string header;
-    ifs >> header;
-    if (header != "P6") {
-        std::cerr << "Error: Formato de archivo no soportado: " << header << std::endl;
+    // Cargamos el archivo en un vector de bytes para proceder con la lectura binaria
+    std::vector<uint8_t> buffer((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    BinaryReader reader(buffer);
+
+    // Leemos y validamos el número mágico (debe ser "P6" para el formato ppm)
+    std::string magic_number = reader.read_string();
+    if (magic_number != "P6") {
+        std::cerr << "Error: El archivo no es un PPM binario (P6)." << std::endl;
         return {};
     }
 
-    int width, height, max_color_value;
-    ifs >> width >> height >> max_color_value;
-    ifs.ignore(256, '\n'); // Ignorar el salto de línea después del valor máximo
+    // Saltamos espacios en blanco y comentarios después del número mágico
+    reader.skip();
 
-    ImageAos img(width, height, max_color_value);
-    if (max_color_value <= 255) {
-        // Leer 3 bytes (RGB) por cada píxel
-        for (int i = 0; i < height; ++i) {
-            for (int j = 0; j < width; ++j) {
-                Pixel p;
-                p.r = ifs.get();
-                p.g = ifs.get();
-                p.b = ifs.get();
-                img.pixels[i * width + j] = p;
-            }
-        }
-    } else {
-        // Leer 6 bytes (RGB, 2 bytes por color) por cada píxel en formato big-endian
-        for (int i = 0; i < height; ++i) {
-            for (int j = 0; j < width; ++j) {
-                Pixel p;
-                p.r = (ifs.get() << 8) | ifs.get();
-                p.g = (ifs.get() << 8) | ifs.get();
-                p.b = (ifs.get() << 8) | ifs.get();
-                img.pixels[i * width + j] = p;
-            }
+    // Leemos el ancho, alto y el valor máximo de color
+    int width = reader.read_ascii_int();
+    reader.skip();
+    int height = reader.read_ascii_int();
+    reader.skip();
+    int max_color_value = reader.read_ascii_int();
+
+    // Validamos el valor máximo de color
+    if (max_color_value != 255 && max_color_value != 65535) {
+        std::cerr << "Error: El valor máximo de color no es compatible: " << max_color_value << std::endl;
+        return {};
+    }
+
+    // Saltamos un solo byte de salto de línea antes de los datos de la imagen
+    reader.skip();
+
+    // Inicializamos la imagen con el tamaño y el valor máximo de color
+    ImageAos image(width, height, max_color_value);
+
+    image.pixels.resize(width * height);
+
+    for (auto& pixel : image.pixels) {
+        if (max_color_value <= 255) {
+            pixel.r = reader.read_uint8();
+            pixel.g = reader.read_uint8();
+            pixel.b = reader.read_uint8();
+        } else {
+            pixel.r = reader.read_uint16();
+            pixel.g = reader.read_uint16();
+            pixel.b = reader.read_uint16();
         }
     }
-    ifs.close();
-    return img;
+
+    return image;
 }
 
-void write_ppm_image(const std::string& filename, const ImageAos& img) {
+
+
+void write_ppm_image_aos(const std::string& filename, const ImageAos& img) {
     std::ofstream ofs(filename, std::ios::binary);
     if (!ofs) {
-        std::cerr << "Error: No se pudo abrir el archivo para escribir: " << filename << std::endl;
-        return;
+        throw std::runtime_error("Error: No se pudo abrir el archivo para escribir: " + filename);
     }
 
-    ofs << "P6\n" << img.width << " " << img.height << "\n" << img.max_color_value << "\n";
-    if (img.max_color_value <= 255) {
-        // Escribir 3 bytes (RGB) por cada píxel
-        for (const auto& pixel : img.pixels) {
-            ofs.put(static_cast<char>(pixel.r));
-            ofs.put(static_cast<char>(pixel.g));
-            ofs.put(static_cast<char>(pixel.b));
-        }
-    } else {
-        // Escribir 6 bytes (RGB, 2 bytes por color) por cada píxel en formato big-endian
-        for (const auto& pixel : img.pixels) {
-            ofs.put(static_cast<char>(pixel.r >> 8));
-            ofs.put(static_cast<char>(pixel.r & 0xFF));
-            ofs.put(static_cast<char>(pixel.g >> 8));
-            ofs.put(static_cast<char>(pixel.g & 0xFF));
-            ofs.put(static_cast<char>(pixel.b >> 8));
-            ofs.put(static_cast<char>(pixel.b & 0xFF));
+    BinaryWriter writer(ofs);
+    // Escribir el encabezado PPM
+    writer.write_string("P6\n");
+    writer.write_ascii_int(img.width);
+    writer.write_string(" ");
+    writer.write_ascii_int(img.height);
+    writer.write_string("\n");
+    writer.write_ascii_int(img.max_color_value);
+    writer.write_string("\n");
+
+
+
+    for (const auto& pixel : img.pixels) {
+        if (img.max_color_value <= 255) {
+            writer.write_uint8(static_cast<uint8_t>(pixel.r));
+            writer.write_uint8(static_cast<uint8_t>(pixel.g));
+            writer.write_uint8(static_cast<uint8_t>(pixel.b));
+        } else {
+            writer.write_uint16(pixel.r);
+            writer.write_uint16(pixel.g);
+            writer.write_uint16(pixel.b);
         }
     }
-    ofs.close();
 }

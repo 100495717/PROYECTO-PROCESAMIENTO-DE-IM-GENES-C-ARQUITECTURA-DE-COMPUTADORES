@@ -2,7 +2,6 @@
 add_library(common
     progargs.cpp
     binaryio.cpp
-    header_ppm.cpp
     )
 
 # Use this line only if you have dependencies from this library to GSL
