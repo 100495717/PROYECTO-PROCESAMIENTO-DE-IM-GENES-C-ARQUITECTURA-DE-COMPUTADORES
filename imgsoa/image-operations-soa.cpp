@@ -205,99 +205,10 @@ private:
     }
 };
 
-//CUTFREQ
- // Definición del color como un arreglo de tres elementos
-using Color = std::array<unsigned short, 3>;
-
-// Estructura de hash optimizada para el color
-struct HashColor {
-    std::size_t operator()(const Color& color) const {
-        return (color[0] << 16) | (color[1] << 8) | color[2];
-    }
-};
-
-// Función optimizada para calcular la distancia euclidiana al cuadrado entre dos colores
-inline int distanciaColorCuadrada(const Color& color1, const Color& color2) {
-    int difRojo = color1[0] - color2[0];
-    int difVerde = color1[1] - color2[1];
-    int difAzul = color1[2] - color2[2];
-    return difRojo * difRojo + difVerde * difVerde + difAzul * difAzul;
-}
-
-// KD-Tree para optimizar la búsqueda de vecinos más cercanos
-struct KDTree {
-    struct Node {
-        Color color;
-        Node* left;
-        Node* right;
-    };
-
-    Node* root;
-
-    KDTree(const std::vector<Color>& colors) {
-        root = build(colors, 0);
-    }
-
-    Node* build(const std::vector<Color>& colors, int depth) {
-        if (colors.empty()) return nullptr;
-
-        int axis = depth % 3;
-        auto sortedColors = colors;
-        std::nth_element(sortedColors.begin(), sortedColors.begin() + sortedColors.size() / 2, sortedColors.end(),
-                         [axis](const Color& a, const Color& b) {
-                             return a[axis] < b[axis];
-                         });
-
-        int median = sortedColors.size() / 2;
-        Node* node = new Node{sortedColors[median], nullptr, nullptr};
-        node->left = build(std::vector<Color>(sortedColors.begin(), sortedColors.begin() + median), depth + 1);
-        node->right = build(std::vector<Color>(sortedColors.begin() + median + 1, sortedColors.end()), depth + 1);
-
-        return node;
-    }
-
-    // Método para encontrar el vecino más cercano en el KD-Tree
-    Color nearestNeighbor(const Color& target, Node* node, int depth, Color best, int& bestDist) const {
-        if (!node) return best;
-
-        int axis = depth % 3;
-        int dist = distanciaColorCuadrada(target, node->color);
-
-        if (dist < bestDist) {
-            bestDist = dist;
-            best = node->color;
-        }
-
-        Node* next = (target[axis] < node->color[axis]) ? node->left : node->right;
-        Node* other = (next == node->left) ? node->right : node->left;
-
-        best = nearestNeighbor(target, next, depth + 1, best, bestDist);
-
-        if ((target[axis] - node->color[axis]) * (target[axis] - node->color[axis]) < bestDist) {
-            best = nearestNeighbor(target, other, depth + 1, best, bestDist);
-        }
-        
-        return best;
-    }
-
-    Color nearestNeighbor(const Color& target) const {
-        int bestDist = std::numeric_limits<int>::max();
-        return nearestNeighbor(target, root, 0, root->color, bestDist);
-    }
-
-    ~KDTree() { deleteTree(root); }
-
-private:
-    void deleteTree(Node* node) {
-        if (!node) return;
-        deleteTree(node->left);
-        deleteTree(node->right);
-        delete node;
-    }
-};
-
-// Función para eliminar los n colores menos frecuentes
-void eliminarColoresPocoFrecuentes(ImageSoA& imagen, int n) {
+// Función principal cutfreq
+void cutfreq(ImageSoA& imagen, int n) {
+    //Primero contamos la frecuencia de cada color, para ello usamos unordened_map
+    //Unordened_map nos permite ubicar rapidamente cada color y ver su frecuencia con la estructura Hash creada antes
     std::unordered_map<Color, int, HashColor> frecuenciaColor;
     for (size_t i = 0; i < imagen.redChannel.size(); ++i) {
         Color color = {static_cast<unsigned short>(imagen.redChannel[i]),
@@ -306,20 +217,26 @@ void eliminarColoresPocoFrecuentes(ImageSoA& imagen, int n) {
         ++frecuenciaColor[color];
     }
 
+    //Comprobamos que n es un número entero positivo y que no sea mayor que el número de colores únicos que hay en la imagen
     if (n <= 0 || n > static_cast<int>(frecuenciaColor.size())) {
         throw std::invalid_argument("Número de colores a eliminar debe estar entre 1 y el número de colores únicos en la imagen.");
     }
 
+    //Convertimos frecuenciaColor en un vector para poder ordenar los colores por sus frecuencias
     std::vector<std::pair<Color, int>> vecFrecuenciaColor(frecuenciaColor.begin(), frecuenciaColor.end());
     std::nth_element(vecFrecuenciaColor.begin(), vecFrecuenciaColor.begin() + n, vecFrecuenciaColor.end(),
                      [](const auto& a, const auto& b) { return a.second < b.second; });
+    
+    //Reducimos el vector para que solo tenga los n colores menos frecuentes
     vecFrecuenciaColor.resize(n);
 
+    //Esos colores menos frecuentes, los añadimos al conjunto coloresMenosFrecuentes
     std::unordered_set<Color, HashColor> coloresMenosFrecuentes;
     for (const auto& color : vecFrecuenciaColor) {
         coloresMenosFrecuentes.insert(color.first);
     }
 
+    //Creamos un vector con los colores restantes 
     std::vector<Color> coloresRestantes;
     for (const auto& color : frecuenciaColor) {
         if (!coloresMenosFrecuentes.count(color.first)) {
@@ -327,17 +244,22 @@ void eliminarColoresPocoFrecuentes(ImageSoA& imagen, int n) {
         }
     }
 
+    //Creamos el árbol con los colores que no vayan a ser eliminados de la imagen
     KDTree tree(coloresRestantes);
     std::unordered_map<Color, Color, HashColor> mapaReemplazo;
 
+    //Buscamos el color más cercano al color que vamos a eliminar
     for (const auto& color : coloresMenosFrecuentes) {
         mapaReemplazo[color] = tree.nearestNeighbor(color);
     }
 
+    //Recorremos  todos los pixeles de la imagen para sustituir aquellos que hagan falta
     for (size_t i = 0; i < imagen.redChannel.size(); ++i) {
         Color color = {static_cast<unsigned short>(imagen.redChannel[i]),
                        static_cast<unsigned short>(imagen.greenChannel[i]),
                        static_cast<unsigned short>(imagen.blueChannel[i])};
+
+        //Reemplazamos el color eliminado por su color más cercano en la imagen
 
         if (coloresMenosFrecuentes.count(color)) {
             Color colorReemplazo = mapaReemplazo[color];
@@ -347,6 +269,8 @@ void eliminarColoresPocoFrecuentes(ImageSoA& imagen, int n) {
         }
     }
 }
+
+
 
 void compress_image_soa(const ImageSoa& img, const std::string& output) {
     std::ofstream file(output, std::ios::binary);
