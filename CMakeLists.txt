@@ -39,13 +39,13 @@ include_directories (PUBLIC .)
 # Process cmake from sim and fluid directories
 add_subdirectory(common)
 add_subdirectory(imgaos)
-#add_subdirectory(imgsoa)
+add_subdirectory(imgsoa)
 add_subdirectory(imtool-aos)
 
 # Unit tests and functional tests
 enable_testing()
-#add_subdirectory(utest-common)
+add_subdirectory(utest-common)
 add_subdirectory(utest-imgaos)
-#add_subdirectory(utest-imgsoa)
+add_subdirectory(utest-imgsoa)
 #add_subdirectory(ftest-aos)
 #add_subdirectory(ftest-soa)
