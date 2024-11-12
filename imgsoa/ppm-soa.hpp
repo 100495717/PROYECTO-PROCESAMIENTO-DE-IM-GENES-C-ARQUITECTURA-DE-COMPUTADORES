@@ -1,12 +1,13 @@
-#ifndef PPMSOA_HPP
-#define PPMSOA_HPP
+#ifndef PPM_SOA_HPP
+#define PPM_SOA_HPP
+
 #include <string>
-#include "imgsoa/imagesoa.hpp"
+#include "imagesoa.hpp"
 
-//Función para leer una imagen en formato PPM
-ImageSoa read_ppm(const std::string& filename);
+// Función para leer un archivo PPM
+ImageSoa read_ppm_image_soa(const std::string& filename);
 
-//Función para escribir una imagen en formato PPM
-void write_ppm(const std::string& filename, const ImageSoa& img);
+// Función para escribir un archivo PPM
+void write_ppm_image_soa(const std::string& filename, const ImageSoa& image);
 
-#endif //PPM_HPP
+#endif // PPM_SOA_HPP

@@ -1,183 +1,265 @@
-#include "image-operations-aos.hpp"
+#include "image-operations-soa.hpp"
 #include "binaryio.hpp"
 #include <iostream>
-#include <fstream>
-#include "pixel-aos.hpp"
 #include <algorithm>
-#include <cmath>
 #include <vector>
 #include <map>
-#include <limits>
-#include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
+#include <tuple>
+#include <limits>
+#include <future>
+#include <execution>
+#include <cmath>
 
-void print_image_info(const ImageAos& img){
+
+
+//FUNCION INFO
+void print_image_info_soa(const ImageSoa& img) {
     std::cout << "Ancho: " << img.width << std::endl;
-    std::cout << "Alto: " << img.height << std::endl;
-    std::cout << "Píxeles totales: " << img.pixels.size() << std::endl;
-
-}
-template <typename T>
-T clamp(T value, T min, T max) {
-    if (value < min) return min;
-    if (value > max) return max;
-    return value;
+    std::cout << "Altp: " << img.height << std::endl;
+    std::cout << "Valor máximo de color" << img.max_color_value << std::endl;
+    std::cout << "Pixeles totales: " << img.width * img.height << std::endl;
 }
 
-void max_level(ImageAos& img, int maxlevel) {
-    // Verificar si el nivel máximo es válido
+
+void max_level(ImageSoa& img, int maxlevel) {
+    // Comprobamos que el nuevo max level es correcto
     if (maxlevel <= 0 || maxlevel > 65535) {
-        throw std::invalid_argument("El nivel máximo debe ser mayor a cero y menor a 65535.");
+        throw std::invalid_argument("El nivel máximo debe ser mayor a cero y menor o igual a 65535.");
     }
 
-    // Factor de escala
+    //Si el nuevo max level coincide con el de la imagen, devolvemos la imagen tal cual
+    if (img.max_color_value == maxlevel) {
+        std::cout << "El valor máximo ya coincide con el valor deseado. No se necesita escalado." << std::endl;
+        return;
+    }
+
+    // Calculamos el factor de escalado
     double scale = static_cast<double>(maxlevel) / img.max_color_value;
+    std::cout << "Factor de escala calculado: " << scale << std::endl;
 
-    // Verificar si necesitamos cambiar la representación de los píxeles
-    bool fromOneToTwoBytes = (img.max_color_value <= 255 && maxlevel > 255);
-    bool fromTwoToOneBytes = (img.max_color_value > 255 && maxlevel <= 255);
+    // Calculamos el nuevo valor de cada pixel (RGB)
+    for (size_t i = 0; i < img.r.size(); ++i) {
+        // Para evitar desbordamientos, nos aseguramos de que los nuevos valores no excedan el limite(65535)
+        int scaledRed = std::min(static_cast<int>(std::floor(img.r[i] * scale)), 65535);
+        int scaledGreen = std::min(static_cast<int>(std::floor(img.g[i] * scale)), 65535);
+        int scaledBlue = std::min(static_cast<int>(std::floor(img.b[i] * scale)), 65535);
 
-    // Crear un nuevo vector de píxeles si es necesario cambiar la representación
-    std::vector<Pixel> new_pixels;
-    if (fromOneToTwoBytes || fromTwoToOneBytes) {
-        new_pixels.resize(img.width * img.height);
+        // Utilizamos unsigned short para que podamos representar (0-65535)
+        img.r[i] = static_cast<unsigned short>(scaledRed);
+        img.g[i] = static_cast<unsigned short>(scaledGreen);
+        img.b[i] = static_cast<unsigned short>(scaledBlue);
     }
 
-    // Iterar sobre los píxeles de la imagen
-    for (size_t i = 0; i < img.pixels.size(); ++i) {
-        int originalRed = img.pixels[i].r;
-        int originalGreen = img.pixels[i].g;
-        int originalBlue = img.pixels[i].b;
-
-        // Escalar los valores de los canales RGB con el nuevo valor máximo
-        int newRed = static_cast<int>(std::round(originalRed * scale));
-        int newGreen = static_cast<int>(std::round(originalGreen * scale));
-        int newBlue = static_cast<int>(std::round(originalBlue * scale));
-
-        if (fromOneToTwoBytes) {
-            // Convertir a 2 bytes por canal
-            new_pixels[i].r = newRed;
-            new_pixels[i].g = newGreen;
-            new_pixels[i].b = newBlue;
-        } else if (fromTwoToOneBytes) {
-            // Convertir a 1 byte por canal
-            new_pixels[i].r = newRed & 0xFF;
-            new_pixels[i].g = newGreen & 0xFF;
-            new_pixels[i].b = newBlue & 0xFF;
-        } else {
-            // Mantener la representación original
-            img.pixels[i].r = newRed;
-            img.pixels[i].g = newGreen;
-            img.pixels[i].b = newBlue;
-        }
-    }
-
-    // Actualizar el nivel máximo de color de la imagen
+    // Actualiza el valor máximo de color después del escalado
     img.max_color_value = maxlevel;
-
-    // Si cambiamos la representación, actualizamos los píxeles
-    if (fromOneToTwoBytes || fromTwoToOneBytes) {
-        img.pixels = std::move(new_pixels);
-    }
+    std::cout << "Escalado completado con nuevo valor máximo: " << img.max_color_value << std::endl;
 }
 
-void resize_image(ImageAos& img, int width, int height){
-    // Comprobamos si las dimensiones proporcionadas son válidas
-    if (width <= 0 || height <= 0) {
-        throw std::invalid_argument("Las dimensiones de la imagen deben ser mayores a cero.");
-    }
-    // Crear un nuevo vector de píxeles con las dimensiones de la nueva imagen
-    std::vector<Pixel> new_pixels(width * height);
+void resize_image_soa(ImageSoa& img, int width, int height) {
+    std::vector<uint16_t> new_r(width * height);
+    std::vector<uint16_t> new_g(width * height);
+    std::vector<uint16_t> new_b(width * height);
     double x_ratio = static_cast<double>(img.width) / width;
     double y_ratio = static_cast<double>(img.height) / height;
-    for (int y = 0; y < height; y++){
-        for (int x = 0; x < width; x++){
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
             int px = static_cast<int>(x * x_ratio);
             int py = static_cast<int>(y * y_ratio);
-            new_pixels[y * width + x] = img.pixels[py * img.width + px];
+            new_r[y * width + x] = img.r[py * img.width + px];
+            new_g[y * width + x] = img.g[py * img.width + px];
+            new_b[y * width + x] = img.b[py * img.width + px];
         }
     }
-    // Actualizar las dimensiones y los píxeles de la imagen
     img.width = width;
     img.height = height;
-    img.pixels = std::move(new_pixels);
+    img.r = std::move(new_r);
+    img.g = std::move(new_g);
+    img.b = std::move(new_b);
 }
 
-// Función auxiliar para calcular la distancia euclídea entre dos píxeles
-double color_distance(const Pixel& a, const Pixel& b) {
-    return std::sqrt(std::pow(a.r - b.r, 2) + std::pow(a.g - b.g, 2) + std::pow(a.b - b.b, 2));
+// CUTFREQ
+// 1. Definimos un array donde almacenaremos los componentes RGB de cada pixel
+using Color = std::array<unsigned short, 3>;
+
+//2. Para poder acceder rapidamente a la frecuencia de cada color, creamos una estructura hash
+//Esta estructura, nos permitira calcular un hash unico por Color
+struct HashColor {
+    std::size_t operator()(const Color& color) const {
+        //Desplazamos y combinamos los bits RGB
+        return (color[0] << 16) | (color[1] << 8) | color[2];
+    }
+};
+
+//3. Desarrollamos la función para calcular la distancia euclidiana al cuadrado entre dos colores (evitandonos calcular la raiz)
+inline int distanciaColorCuadrada(const Color& color1, const Color& color2) {
+    int difRojo = color1[0] - color2[0];
+    int difVerde = color1[1] - color2[1];
+    int difAzul = color1[2] - color2[2];
+    return difRojo * difRojo + difVerde * difVerde + difAzul * difAzul;
 }
 
-// Función para encontrar el píxel más cercano
-Pixel find_closest_pixel(const Pixel& target, const std::vector<Pixel>& pixels) {
-    double min_distance = std::numeric_limits<double>::max();
-    Pixel closest = target;
-    // Iterar sobre los píxeles y encontrar el más cercano al objetivo
-    for (const auto& pixel : pixels) {
-        double distance = color_distance(target, pixel);
-        if (distance < min_distance) {
-            min_distance = distance;
-            closest = pixel;
+//4.Para la busqueda de colores cercanos, hemos decidido crear un KD-Tree para optimizar la búsqueda
+//Este arbol almacenará los colores restantes una vez identidicado los n menos frecuentes
+struct KDTree {
+    //Cada nodo del árbol almacrna un color y apunta a sus subárboles
+    struct Node {
+        Color color;
+        Node* left;
+        Node* right;
+    };
+
+    //Nodo raiz
+    Node* root;
+
+    //Construimos el árbol dado un vector de colores
+    KDTree(const std::vector<Color>& colors) {
+        root = build(colors, 0);
+    }
+
+    //Creamos una funcion recursiva en profundidad para construir el KDTree
+    Node* build(const std::vector<Color>& colors, int depth) {
+        if (colors.empty()) return nullptr; //Si el arbol esta vacio, devolvemos nullptr
+
+        int axis = depth % 3;
+        auto sortedColors = colors;
+        std::nth_element(sortedColors.begin(), sortedColors.begin() + sortedColors.size() / 2, sortedColors.end(),
+                         [axis](const Color& a, const Color& b) {
+                             return a[axis] < b[axis];
+                         });
+
+        int median = sortedColors.size() / 2;
+        Node* node = new Node{sortedColors[median], nullptr, nullptr};
+        node->left = build(std::vector<Color>(sortedColors.begin(), sortedColors.begin() + median), depth + 1);
+        node->right = build(std::vector<Color>(sortedColors.begin() + median + 1, sortedColors.end()), depth + 1);
+
+        return node;
+    }
+
+    // Méto do que encuentra el color más cercano a target. Busqueda recursiva
+    Color nearestNeighbor(const Color& target, Node* node, int depth, Color best, int& bestDist) const {
+        //Caso base: si llegamos a un nodo nullptr, devolvemos el color mas cercano hasta ahora
+        if (!node) return best;
+
+        int axis = depth % 3;
+        //Calculamos la distancia entrre el nodo correspondiente target y el color que corresponda
+        int dist = distanciaColorCuadrada(target, node->color);
+
+        //Si la distancia es menor que la mejor encontrada, actualizamos best node
+        if (dist < bestDist) {
+            bestDist = dist;
+            best = node->color;
+        }
+
+        //Determinamos next, que es el subárbol que nos conviene explorar
+        Node* next = (target[axis] < node->color[axis]) ? node->left : node->right;
+
+        //En caso de tener que seguir explorando, se buscará por el subárbol other
+        Node* other = (next == node->left) ? node->right : node->left;
+
+        //Llamamos de nuevo al méto do recursivamente (busqueda en profundidad)
+        best = nearestNeighbor(target, next, depth + 1, best, bestDist);
+
+        //En caso de que podamos encontrar un mejor color, buscamos por el subarbol other
+        if ((target[axis] - node->color[axis]) * (target[axis] - node->color[axis]) < bestDist) {
+            best = nearestNeighbor(target, other, depth + 1, best, bestDist);
+        }
+
+        //Devolvemos el mejor color que hayamos encontrado
+        return best;
+    }
+
+    //Méto do público que busca el vecino mas cercano llamando al méto do anterior
+    Color nearestNeighbor(const Color& target) const {
+        int bestDist = std::numeric_limits<int>::max();
+        return nearestNeighbor(target, root, 0, root->color, bestDist);
+    }
+
+    //Liberamos la memoria que ocupaba el árbol
+    ~KDTree() { deleteTree(root); }
+
+private:
+    //Méto do que destruye los nodos del árbol creado
+    void deleteTree(Node* node) {
+        if (!node) return;
+        deleteTree(node->left);
+        deleteTree(node->right);
+        delete node;
+    }
+};
+
+// Función principal cutfreq
+void cutfreq(ImageSoa& imagen, int n) {
+    //Primero contamos la frecuencia de cada color, para ello usamos unordened_map
+    //Unordened_map nos permite ubicar rapidamente cada color y ver su frecuencia con la estructura Hash creada antes
+    std::unordered_map<Color, int, HashColor> frecuenciaColor;
+    for (size_t i = 0; i < imagen.r.size(); ++i) {
+        Color color = {static_cast<unsigned short>(imagen.r[i]),
+                       static_cast<unsigned short>(imagen.g[i]),
+                       static_cast<unsigned short>(imagen.b[i])};
+        ++frecuenciaColor[color];
+    }
+
+    //Comprobamos que n es un número entero positivo y que no sea mayor que el número de colores únicos que hay en la imagen
+    if (n <= 0 || n > static_cast<int>(frecuenciaColor.size())) {
+        throw std::invalid_argument("Número de colores a eliminar debe estar entre 1 y el número de colores únicos en la imagen.");
+    }
+
+    //Convertimos frecuenciaColor en un vector para poder ordenar los colores por sus frecuencias
+    std::vector<std::pair<Color, int>> vecFrecuenciaColor(frecuenciaColor.begin(), frecuenciaColor.end());
+    std::nth_element(vecFrecuenciaColor.begin(), vecFrecuenciaColor.begin() + n, vecFrecuenciaColor.end(),
+                     [](const auto& a, const auto& b) { return a.second < b.second; });
+
+    //Reducimos el vector para que solo tenga los n colores menos frecuentes
+    vecFrecuenciaColor.resize(n);
+
+    //Esos colores menos frecuentes, los añadimos al conjunto coloresMenosFrecuentes
+    std::unordered_set<Color, HashColor> coloresMenosFrecuentes;
+    for (const auto& color : vecFrecuenciaColor) {
+        coloresMenosFrecuentes.insert(color.first);
+    }
+
+    //Creamos un vector con los colores restantes
+    std::vector<Color> coloresRestantes;
+    for (const auto& color : frecuenciaColor) {
+        if (!coloresMenosFrecuentes.count(color.first)) {
+            coloresRestantes.push_back(color.first);
         }
     }
-    return closest;
-}
 
-void cut_freq(ImageAos& img, int n) {
-    // Paso 1: Determinar la frecuencia de cada color
-    std::unordered_map<Pixel, int> freq_map;
-    for (const auto& pixel : img.pixels) {
-        freq_map[pixel]++;
+    //Creamos el árbol con los colores que no vayan a ser eliminados de la imagen
+    KDTree tree(coloresRestantes);
+    std::unordered_map<Color, Color, HashColor> mapaReemplazo;
+
+    //Buscamos el color más cercano al color que vamos a eliminar
+    for (const auto& color : coloresMenosFrecuentes) {
+        mapaReemplazo[color] = tree.nearestNeighbor(color);
     }
 
-    // Comprobamos si 'n' es válido
-    if (n <= 0) {
-        throw std::invalid_argument("El número de colores a eliminar debe ser mayor que cero.");
-    }
-    if (static_cast<size_t>(n) > freq_map.size()) {
-        throw std::invalid_argument("El número de colores a eliminar no puede ser mayor que el número de colores únicos en la imagen.");
-    }
+    //Recorremos  todos los pixeles de la imagen para sustituir aquellos que hagan falta
+    for (size_t i = 0; i < imagen.r.size(); ++i) {
+        Color color = {static_cast<unsigned short>(imagen.r[i]),
+                       static_cast<unsigned short>(imagen.g[i]),
+                       static_cast<unsigned short>(imagen.b[i])};
 
-    // Paso 2: Identificar los n colores menos frecuentes
-    std::vector<std::pair<Pixel, int>> freq_vec(freq_map.begin(), freq_map.end());
-    std::partial_sort(freq_vec.begin(), freq_vec.begin() + n, freq_vec.end(), [](const auto& a, const auto& b) {
-        return a.second < b.second;
-    });
+        //Reemplazamos el color eliminado por su color más cercano en la imagen
 
-    // Crear un conjunto de los colores menos frecuentes
-    std::unordered_set<Pixel> least_freq_pixels;
-    for (int i = 0; i < n && static_cast<size_t>(i) < freq_vec.size(); ++i) {
-        least_freq_pixels.insert(freq_vec[i].first);
-    }
-
-    // Paso 3: Reemplazar los colores menos frecuentes por el color más cercano restante
-    std::vector<Pixel> remaining_pixels;
-    for (const auto& [pixel, _] : freq_map) {
-        if (least_freq_pixels.find(pixel) == least_freq_pixels.end()) {
-            remaining_pixels.push_back(pixel);
-        }
-    }
-
-    // Crear un mapa de reemplazo para evitar cálculos redundantes
-    std::unordered_map<Pixel, Pixel> replacement_map;
-    for (const auto& pixel : least_freq_pixels) {
-        replacement_map[pixel] = find_closest_pixel(pixel, remaining_pixels);
-    }
-
-    // Reemplazar los colores menos frecuentes en la imagen
-    for (auto& pixel : img.pixels) {
-        if (replacement_map.find(pixel) != replacement_map.end()) {
-            pixel = replacement_map[pixel];
+        if (coloresMenosFrecuentes.count(color)) {
+            Color colorReemplazo = mapaReemplazo[color];
+            imagen.r[i] = colorReemplazo[0];
+            imagen.g[i] = colorReemplazo[1];
+            imagen.b[i] = colorReemplazo[2];
         }
     }
 }
 
-void compress_image(const ImageAos& img, const std::string& output) {
-    // Crear un archivo binario para escribir los datos comprimidos
+
+/*
+void compress_image_soa(const ImageSoa& img, const std::string& output) {
     std::ofstream file(output + ".cppm", std::ios::binary);
     if (!file) {
-        throw std::runtime_error("Error: No se pudo abrir el archivo " + output + ".cppm");
+        throw std::runtime_error("No se pudo abrir el archivo para escritura");
     }
 
     BinaryWriter writer(file);
@@ -192,10 +274,12 @@ void compress_image(const ImageAos& img, const std::string& output) {
     writer.write_string(" ");
 
     // Crear un mapa de frecuencia de colores y una lista de colores
-    std::map<Pixel, int> freq_map;
-    std::vector<Pixel> color_list;
+    std::map<std::tuple<uint8_t, uint8_t, uint8_t>, int> freq_map;
+    std::vector<std::tuple<uint8_t, uint8_t, uint8_t>> color_list;
     int color_index = 0;
-    for (const auto& pixel : img.pixels) {
+
+    for (int i = 0; i < img.width * img.height; ++i) {
+        auto pixel = std::make_tuple(img.r[i], img.g[i], img.b[i]);
         if (freq_map.find(pixel) == freq_map.end()) {
             freq_map[pixel] = color_index++;
             color_list.push_back(pixel);
@@ -206,30 +290,13 @@ void compress_image(const ImageAos& img, const std::string& output) {
     writer.write_ascii_int(static_cast<int>(color_list.size()));
     writer.write_string("\n");
 
-    // Escribir la tabla de colores
-    for (const auto& pixel : color_list) {
-        if (img.max_color_value <= 255) {
-            writer.write_uint8(static_cast<uint8_t>(pixel.r));
-            writer.write_uint8(static_cast<uint8_t>(pixel.g));
-            writer.write_uint8(static_cast<uint8_t>(pixel.b));
-        } else {
-            writer.write_uint16(pixel.r);
-            writer.write_uint16(pixel.g);
-            writer.write_uint16(pixel.b);
-        }
+    for (int i = 0; i < img.width * img.height; ++i) {
+        file.put(img.r[i]);
+        file.put(img.g[i]);
+        file.put(img.b[i]);
     }
 
-    // Escribir los índices de los colores
-    int index_size = (color_list.size() < 256) ? 1 : (color_list.size() < 65536) ? 2 : 4;
-    for (const auto& pixel : img.pixels) {
-        int index = freq_map[pixel];
-        for (int i = 0; i < index_size; ++i) {
-            writer.write_uint8(static_cast<uint8_t>((index >> (i * 8)) & 0xFF));
-        }
-    }
-
-    // Verificar si hubo un error al escribir los datos comprimidos
     if (!file) {
-        throw std::runtime_error("Error: Error al escribir los datos de los píxeles comprimidos.");
+        throw std::runtime_error("Error al escribir los datos de los píxeles");
     }
-}
+}*/
