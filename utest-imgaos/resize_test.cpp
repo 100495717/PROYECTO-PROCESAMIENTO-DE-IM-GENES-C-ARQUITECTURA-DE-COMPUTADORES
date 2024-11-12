@@ -62,6 +62,30 @@ TEST(resize, resizetobigger){
     EXPECT_EQ(img.pixels, expected_pixels);
 }
 
+TEST(resize, resizetobigger65535){
+    ImageAos img;
+    img.width = 2;
+    img.height = 2;
+    img.max_color_value = 65535;
+    std::vector<Pixel> pixels = { {1,0,0}, {0,1,0},
+                                  {1,0,0}, {0,1,0} };
+    img.pixels = pixels;
+
+    resize_image(img, 4, 4);
+
+    int const expected_width = 4;
+    int const expected_height = 4;
+    int const expected_max_color_value = 65535;
+    std::vector<Pixel> const expected_pixels = { {1,0,0}, {1,0,0}, {0,1,0}, {0,1,0},
+                                                 {1,0,0}, {1,0,0}, {0,1,0}, {0,1,0},
+                                                 {1,0,0}, {1,0,0}, {0,1,0}, {0,1,0},
+                                                 {1,0,0}, {1,0,0}, {0,1,0}, {0,1,0} };
+    EXPECT_EQ(img.width, expected_width);
+    EXPECT_EQ(img.height, expected_height);
+    EXPECT_EQ(img.max_color_value, expected_max_color_value);
+    EXPECT_EQ(img.pixels, expected_pixels);
+}
+
 
 TEST(resize, invalid_width){
     ImageAos img;

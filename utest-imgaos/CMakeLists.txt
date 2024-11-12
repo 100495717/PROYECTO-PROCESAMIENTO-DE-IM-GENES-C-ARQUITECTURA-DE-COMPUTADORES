@@ -3,6 +3,9 @@
 add_executable(utest-imgaos
     resize_test.cpp
     info_test.cpp
+    compress_test.cpp
+    cutfreq_test.cpp
+    maxlevel_test.cpp
 )
 
 # Library dependencies

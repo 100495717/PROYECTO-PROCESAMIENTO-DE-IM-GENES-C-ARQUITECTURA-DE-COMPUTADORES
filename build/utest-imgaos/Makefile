@@ -185,6 +185,54 @@ utest-imgaos/fast:
 	cd /home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build && $(MAKE) $(MAKESILENT) -f utest-imgaos/CMakeFiles/utest-imgaos.dir/build.make utest-imgaos/CMakeFiles/utest-imgaos.dir/build
 .PHONY : utest-imgaos/fast
 
+compress_test.o: compress_test.cpp.o
+.PHONY : compress_test.o
+
+# target to build an object file
+compress_test.cpp.o:
+	cd /home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build && $(MAKE) $(MAKESILENT) -f utest-imgaos/CMakeFiles/utest-imgaos.dir/build.make utest-imgaos/CMakeFiles/utest-imgaos.dir/compress_test.cpp.o
+.PHONY : compress_test.cpp.o
+
+compress_test.i: compress_test.cpp.i
+.PHONY : compress_test.i
+
+# target to preprocess a source file
+compress_test.cpp.i:
+	cd /home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build && $(MAKE) $(MAKESILENT) -f utest-imgaos/CMakeFiles/utest-imgaos.dir/build.make utest-imgaos/CMakeFiles/utest-imgaos.dir/compress_test.cpp.i
+.PHONY : compress_test.cpp.i
+
+compress_test.s: compress_test.cpp.s
+.PHONY : compress_test.s
+
+# target to generate assembly for a file
+compress_test.cpp.s:
+	cd /home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build && $(MAKE) $(MAKESILENT) -f utest-imgaos/CMakeFiles/utest-imgaos.dir/build.make utest-imgaos/CMakeFiles/utest-imgaos.dir/compress_test.cpp.s
+.PHONY : compress_test.cpp.s
+
+cutfreq_test.o: cutfreq_test.cpp.o
+.PHONY : cutfreq_test.o
+
+# target to build an object file
+cutfreq_test.cpp.o:
+	cd /home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build && $(MAKE) $(MAKESILENT) -f utest-imgaos/CMakeFiles/utest-imgaos.dir/build.make utest-imgaos/CMakeFiles/utest-imgaos.dir/cutfreq_test.cpp.o
+.PHONY : cutfreq_test.cpp.o
+
+cutfreq_test.i: cutfreq_test.cpp.i
+.PHONY : cutfreq_test.i
+
+# target to preprocess a source file
+cutfreq_test.cpp.i:
+	cd /home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build && $(MAKE) $(MAKESILENT) -f utest-imgaos/CMakeFiles/utest-imgaos.dir/build.make utest-imgaos/CMakeFiles/utest-imgaos.dir/cutfreq_test.cpp.i
+.PHONY : cutfreq_test.cpp.i
+
+cutfreq_test.s: cutfreq_test.cpp.s
+.PHONY : cutfreq_test.s
+
+# target to generate assembly for a file
+cutfreq_test.cpp.s:
+	cd /home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build && $(MAKE) $(MAKESILENT) -f utest-imgaos/CMakeFiles/utest-imgaos.dir/build.make utest-imgaos/CMakeFiles/utest-imgaos.dir/cutfreq_test.cpp.s
+.PHONY : cutfreq_test.cpp.s
+
 info_test.o: info_test.cpp.o
 .PHONY : info_test.o
 
@@ -208,6 +256,30 @@ info_test.s: info_test.cpp.s
 info_test.cpp.s:
 	cd /home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build && $(MAKE) $(MAKESILENT) -f utest-imgaos/CMakeFiles/utest-imgaos.dir/build.make utest-imgaos/CMakeFiles/utest-imgaos.dir/info_test.cpp.s
 .PHONY : info_test.cpp.s
+
+maxlevel_test.o: maxlevel_test.cpp.o
+.PHONY : maxlevel_test.o
+
+# target to build an object file
+maxlevel_test.cpp.o:
+	cd /home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build && $(MAKE) $(MAKESILENT) -f utest-imgaos/CMakeFiles/utest-imgaos.dir/build.make utest-imgaos/CMakeFiles/utest-imgaos.dir/maxlevel_test.cpp.o
+.PHONY : maxlevel_test.cpp.o
+
+maxlevel_test.i: maxlevel_test.cpp.i
+.PHONY : maxlevel_test.i
+
+# target to preprocess a source file
+maxlevel_test.cpp.i:
+	cd /home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build && $(MAKE) $(MAKESILENT) -f utest-imgaos/CMakeFiles/utest-imgaos.dir/build.make utest-imgaos/CMakeFiles/utest-imgaos.dir/maxlevel_test.cpp.i
+.PHONY : maxlevel_test.cpp.i
+
+maxlevel_test.s: maxlevel_test.cpp.s
+.PHONY : maxlevel_test.s
+
+# target to generate assembly for a file
+maxlevel_test.cpp.s:
+	cd /home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build && $(MAKE) $(MAKESILENT) -f utest-imgaos/CMakeFiles/utest-imgaos.dir/build.make utest-imgaos/CMakeFiles/utest-imgaos.dir/maxlevel_test.cpp.s
+.PHONY : maxlevel_test.cpp.s
 
 resize_test.o: resize_test.cpp.o
 .PHONY : resize_test.o
@@ -247,9 +319,18 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... test"
 	@echo "... utest-imgaos"
+	@echo "... compress_test.o"
+	@echo "... compress_test.i"
+	@echo "... compress_test.s"
+	@echo "... cutfreq_test.o"
+	@echo "... cutfreq_test.i"
+	@echo "... cutfreq_test.s"
 	@echo "... info_test.o"
 	@echo "... info_test.i"
 	@echo "... info_test.s"
+	@echo "... maxlevel_test.o"
+	@echo "... maxlevel_test.i"
+	@echo "... maxlevel_test.s"
 	@echo "... resize_test.o"
 	@echo "... resize_test.i"
 	@echo "... resize_test.s"

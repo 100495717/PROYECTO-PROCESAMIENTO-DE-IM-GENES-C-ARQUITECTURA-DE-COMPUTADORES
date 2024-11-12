@@ -1,6 +1,12 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/utest-imgaos.dir/compress_test.cpp.o"
+  "CMakeFiles/utest-imgaos.dir/compress_test.cpp.o.d"
+  "CMakeFiles/utest-imgaos.dir/cutfreq_test.cpp.o"
+  "CMakeFiles/utest-imgaos.dir/cutfreq_test.cpp.o.d"
   "CMakeFiles/utest-imgaos.dir/info_test.cpp.o"
   "CMakeFiles/utest-imgaos.dir/info_test.cpp.o.d"
+  "CMakeFiles/utest-imgaos.dir/maxlevel_test.cpp.o"
+  "CMakeFiles/utest-imgaos.dir/maxlevel_test.cpp.o.d"
   "CMakeFiles/utest-imgaos.dir/resize_test.cpp.o"
   "CMakeFiles/utest-imgaos.dir/resize_test.cpp.o.d"
   "utest-imgaos"

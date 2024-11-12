@@ -81,6 +81,11 @@ void max_level(ImageAos& img, int maxlevel) {
         img.pixels = std::move(new_pixels);
     }
 }
+void print_pixels(const std::vector<Pixel>& pixels) {
+    for (const auto& pixel : pixels) {
+        std::cout << "Pixel(" << pixel.r << ", " << pixel.g << ", " << pixel.b << ")" << std::endl;
+    }
+}
 
 void resize_image(ImageAos& img, int width, int height){
     // Comprobamos si las dimensiones proporcionadas son válidas
