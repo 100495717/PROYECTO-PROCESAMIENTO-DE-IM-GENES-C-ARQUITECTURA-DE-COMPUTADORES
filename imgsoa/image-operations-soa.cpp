@@ -57,6 +57,7 @@ void max_level(ImageSoa& img, int maxlevel) {
         img.greenChannel[i] = static_cast<unsigned short>(scaledGreen);
         img.blueChannel[i] = static_cast<unsigned short>(scaledBlue);
 
+        //Estos prints son de depuracion, hay que quitarlos
         if (i < 10) {
             std::cout << "[Después del escalado] Pixel " << i
                       << " - R: " << img.redChannel[i]
@@ -65,34 +66,95 @@ void max_level(ImageSoa& img, int maxlevel) {
         }
     }
 
-    // Actualiza el valor máximo de color después del escalado
+    // Actualizamos el valor máximo de color después del escalado
     img.max_color_value = maxlevel;
     std::cout << "Escalado completado con nuevo valor máximo: " << img.max_color_value << std::endl;
 }
 
 
 
+//RESIZE
+//Función que combina los cuatro pixeles vecinos de un pixel dadas sus coordenadas (x,y)
+unsigned short interpolacionBilineal(double x, double y,
+                                    unsigned short c00, unsigned short c10,
+                                    unsigned short c01, unsigned short c11) {
+    // Calculamos mediante la interpolacion c1, en el eje x entre c00 y c10 
+    double c1 = c00 * (1 - x) + c10 * x;
+    // Calculamos mediante la interpolacion c2, en el eje x entre c01 y c11
+    double c2 = c01 * (1 - x) + c11 * x;
+    // Devolvemos el valor final de la interpolacion en el eje y
+    //Se suma 0.5 para redondear al entero mas cercano
+    return static_cast<unsigned short>(c1 * (1 - y) + c2 * y + 0.5);
+} 
 
-void resize_image_soa(ImageSoa& img, int width, int height) {
-    std::vector<unsigned char> new_r(width * height);
-    std::vector<unsigned char> new_g(width * height);
-    std::vector<unsigned char> new_b(width * height);
-    double x_ratio = static_cast<double>(img.width) / width;
-    double y_ratio = static_cast<double>(img.height) / height;
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            int px = static_cast<int>(x * x_ratio);
-            int py = static_cast<int>(y * y_ratio);
-            new_r[y * width + x] = img.r[py * img.width + px];
-            new_g[y * width + x] = img.g[py * img.width + px];
-            new_b[y * width + x] = img.b[py * img.width + px];
+//Funcion resize
+void resize_image(ImageSoA& img, int new_width, int new_height) {
+    //Comprobamos que las dimensiones introducidas son correcctas
+    if (new_width <= 0 || new_height <= 0) {
+        throw std::invalid_argument("Las dimensiones de la imagen deben ser mayores a cero.");
+    }
+
+    // Creamos nuevos canales de color para la nueva imagen redimensionada
+    std::vector<unsigned short> new_redChannel(new_width * new_height);
+    std::vector<unsigned short> new_greenChannel(new_width * new_height);
+    std::vector<unsigned short> new_blueChannel(new_width * new_height);
+
+    //Calculamos la relacion entre w/w` y entre h/h`
+    double x_ratio = static_cast<double>(img.width) / new_width;
+    double y_ratio = static_cast<double>(img.height) / new_height;
+
+    //Para cada posición de la nueva imagen:
+    for (int y = 0; y < new_height; ++y) {
+        for (int x = 0; x < new_width; ++x) {
+            // Calculamos las coordenadas: x= x*x_ratio ;  y=y*y_ratio
+            double gx = x * x_ratio;
+            double gy = y * y_ratio;
+
+            // Determinamos los 4 pixeles más próximos en la imagen original:
+            int xl = static_cast<int>(std::floor(gx));
+            int xh = std::min(static_cast<int>(std::ceil(gx)), img.width - 1);
+            int yl = static_cast<int>(std::floor(gy));
+            int yh = std::min(static_cast<int>(std::ceil(gy)), img.height - 1);
+
+            // Calculamos la diferencias correspondientes desde la posición de la imagen original
+            double diferencia_x = gx - xl;
+            double diferencia_y = gy - yl;
+
+            // Calculamos los nuevos índices de los pixeles adyacentes
+            int indice00 = yl * img.width + xl;
+            int indice10 = yl * img.width + xh;
+            int indice01 = yh * img.width + xl;
+            int indice11 = yh * img.width + xh;
+
+            // Aplicamos la interpolacion bilineal en todos los arrays del struct ImageSoA (redChannel,blueChannel,greenChannel)
+            new_redChannel[y * new_width + x] = interpolacionBilineal(
+                diferencia_x, diferencia_y,
+                img.redChannel[indice00], img.redChannel[indice10],
+                img.redChannel[indice01], img.redChannel[indice11]
+            );
+
+            new_greenChannel[y * new_width + x] = interpolacionBilineal(
+                diferencia_x, diferencia_y,
+                img.greenChannel[indice00], img.greenChannel[indice10],
+                img.greenChannel[indice01], img.greenChannel[indice11]
+            );
+
+            new_blueChannel[y * new_width + x] = interpolacionBilineal(
+                diferencia_x, diferencia_y,
+                img.blueChannel[indice00], img.blueChannel[indice10],
+                img.blueChannel[indice01], img.blueChannel[indice11]
+            );
         }
     }
-    img.width = width;
-    img.height = height;
-    img.r = std::move(new_r);
-    img.g = std::move(new_g);
-    img.b = std::move(new_b);
+
+    // Actualizamos las dimensiones
+    img.width = new_width;
+    img.height = new_height;
+
+    // Actualizamos los arrays de los colores de la imagen
+    img.redChannel = std::move(new_redChannel);
+    img.greenChannel = std::move(new_greenChannel);
+    img.blueChannel = std::move(new_blueChannel);
 }
 
 //CUTFREQ
