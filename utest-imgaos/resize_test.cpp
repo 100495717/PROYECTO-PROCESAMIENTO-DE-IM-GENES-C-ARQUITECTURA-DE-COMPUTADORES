@@ -89,7 +89,3 @@ TEST(resize, invalid_height){
     EXPECT_THROW(resize_image(img, 2, -1), std::invalid_argument);
 }
 
-int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

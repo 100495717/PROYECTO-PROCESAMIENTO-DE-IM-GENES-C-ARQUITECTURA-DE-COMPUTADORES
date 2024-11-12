@@ -426,12 +426,12 @@ utest-imgaos/CMakeFiles/utest-imgaos.dir/all: common/CMakeFiles/common.dir/all
 utest-imgaos/CMakeFiles/utest-imgaos.dir/all: imgaos/CMakeFiles/imgaos.dir/all
 	$(MAKE) $(MAKESILENT) -f utest-imgaos/CMakeFiles/utest-imgaos.dir/build.make utest-imgaos/CMakeFiles/utest-imgaos.dir/depend
 	$(MAKE) $(MAKESILENT) -f utest-imgaos/CMakeFiles/utest-imgaos.dir/build.make utest-imgaos/CMakeFiles/utest-imgaos.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/CMakeFiles --progress-num=17,18 "Built target utest-imgaos"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/CMakeFiles --progress-num=17,18,19 "Built target utest-imgaos"
 .PHONY : utest-imgaos/CMakeFiles/utest-imgaos.dir/all
 
 # Build rule for subdir invocation for target.
 utest-imgaos/CMakeFiles/utest-imgaos.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/CMakeFiles 12
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/CMakeFiles 13
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 utest-imgaos/CMakeFiles/utest-imgaos.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/CMakeFiles 0
 .PHONY : utest-imgaos/CMakeFiles/utest-imgaos.dir/rule

@@ -185,6 +185,30 @@ utest-imgaos/fast:
 	cd /home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build && $(MAKE) $(MAKESILENT) -f utest-imgaos/CMakeFiles/utest-imgaos.dir/build.make utest-imgaos/CMakeFiles/utest-imgaos.dir/build
 .PHONY : utest-imgaos/fast
 
+info_test.o: info_test.cpp.o
+.PHONY : info_test.o
+
+# target to build an object file
+info_test.cpp.o:
+	cd /home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build && $(MAKE) $(MAKESILENT) -f utest-imgaos/CMakeFiles/utest-imgaos.dir/build.make utest-imgaos/CMakeFiles/utest-imgaos.dir/info_test.cpp.o
+.PHONY : info_test.cpp.o
+
+info_test.i: info_test.cpp.i
+.PHONY : info_test.i
+
+# target to preprocess a source file
+info_test.cpp.i:
+	cd /home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build && $(MAKE) $(MAKESILENT) -f utest-imgaos/CMakeFiles/utest-imgaos.dir/build.make utest-imgaos/CMakeFiles/utest-imgaos.dir/info_test.cpp.i
+.PHONY : info_test.cpp.i
+
+info_test.s: info_test.cpp.s
+.PHONY : info_test.s
+
+# target to generate assembly for a file
+info_test.cpp.s:
+	cd /home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build && $(MAKE) $(MAKESILENT) -f utest-imgaos/CMakeFiles/utest-imgaos.dir/build.make utest-imgaos/CMakeFiles/utest-imgaos.dir/info_test.cpp.s
+.PHONY : info_test.cpp.s
+
 resize_test.o: resize_test.cpp.o
 .PHONY : resize_test.o
 
@@ -223,6 +247,9 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... test"
 	@echo "... utest-imgaos"
+	@echo "... info_test.o"
+	@echo "... info_test.i"
+	@echo "... info_test.s"
 	@echo "... resize_test.o"
 	@echo "... resize_test.i"
 	@echo "... resize_test.s"

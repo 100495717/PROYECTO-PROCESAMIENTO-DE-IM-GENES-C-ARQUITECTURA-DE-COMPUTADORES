@@ -8,6 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/utest-imgaos/info_test.cpp" "utest-imgaos/CMakeFiles/utest-imgaos.dir/info_test.cpp.o" "gcc" "utest-imgaos/CMakeFiles/utest-imgaos.dir/info_test.cpp.o.d"
   "/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/utest-imgaos/resize_test.cpp" "utest-imgaos/CMakeFiles/utest-imgaos.dir/resize_test.cpp.o" "gcc" "utest-imgaos/CMakeFiles/utest-imgaos.dir/resize_test.cpp.o.d"
   )
 

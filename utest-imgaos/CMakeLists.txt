@@ -2,6 +2,7 @@
 # For example, you mas have one *_test.cpp fpr each *.cpp in img-aos
 add_executable(utest-imgaos
     resize_test.cpp
+    info_test.cpp
 )
 
 # Library dependencies

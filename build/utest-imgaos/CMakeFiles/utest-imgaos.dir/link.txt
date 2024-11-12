@@ -1,1 +1,1 @@
-/usr/bin/c++ -O3 -DNDEBUG -march=native "CMakeFiles/utest-imgaos.dir/resize_test.cpp.o" -o utest-imgaos  ../imgaos/libimgaos.a ../lib/libgtest_main.a ../common/libcommon.a ../lib/libgtest.a 
+/usr/bin/c++ -O3 -DNDEBUG -march=native "CMakeFiles/utest-imgaos.dir/resize_test.cpp.o" "CMakeFiles/utest-imgaos.dir/info_test.cpp.o" -o utest-imgaos  ../imgaos/libimgaos.a ../lib/libgtest_main.a ../common/libcommon.a ../lib/libgtest.a 
