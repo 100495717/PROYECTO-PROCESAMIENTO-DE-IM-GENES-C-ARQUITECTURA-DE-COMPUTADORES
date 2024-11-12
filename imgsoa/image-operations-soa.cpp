@@ -334,21 +334,106 @@ void cutfreq(ImageSoA& imagen, int n) {
 
 
 
-void compress_image_soa(const ImageSoa& img, const std::string& output) {
+//COMPRESS
+void compress_image(const ImageSoA& img, const std::string& output) {
+    // Creamos el archivo donde vamos a escribir la imagen en formato CPPM
     std::ofstream file(output, std::ios::binary);
+
+    // Comprobamos si hay algun error a la hora de abrir el fichero de escritura
     if (!file) {
-        throw std::runtime_error("No se pudo abrir el archivo para escritura");
+        throw std::runtime_error("Error: No se pudo abrir el archivo " + output);
     }
 
-    file << "CPPM\n" << img.width << " " << img.height << "\n";
+    // Escribimos el número mágico para archivos en formatoCPPM (con un espacio en blanco)
+    file << "C6 ";
 
+    // Escribimos la anchura altura y valor maximo en decimal con espacios en blanco entre ellos
+    file << img.width << " " << img.height << " " << img.max_color_value << " ";
+
+    // Creamos un mapa para cada color, y asi poder contar cuantos colores únicos hay en la imagen de entrada
+    std::map<std::tuple<unsigned short, unsigned short, unsigned short>, int> color_map;
+    std::vector<std::tuple<unsigned short, unsigned short, unsigned short>> color_list;
+
+    // Cada color tendra un índice en la tabla de colores
+    int color_index = 0;
+
+    // Para cada pixel en la imagen:
     for (int i = 0; i < img.width * img.height; ++i) {
-        file.put(img.r[i]);
-        file.put(img.g[i]);
-        file.put(img.b[i]);
+        // Obtenemos el color de ese pixel combinando los valores RGB
+        auto color = std::make_tuple(img.redChannel[i], img.greenChannel[i], img.blueChannel[i]);
+
+        // Agregamos el color al mapa de colores si no se habia añadido antes
+        if (color_map.find(color) == color_map.end()) {
+            color_map[color] = color_index++;
+            color_list.push_back(color);
+        }
     }
 
-    if (!file) {
-        throw std::runtime_error("Error al escribir los datos de los píxeles");
+    // Escribimos cuantas entradas hay en la tabla de colores (seguido de un salto de linea)
+    file << color_list.size() << "\n";
+
+    // Escribimos dicha tabla de colores
+    for (const auto& color : color_list) {
+        unsigned short r, g, b;
+        std::tie(r, g, b) = color;
+        
+        //Si maxval<=255 entonces usamos 1 byte por canal
+        if (img.max_color_value <= 255) {
+            file.put(static_cast<unsigned char>(r));
+            file.put(static_cast<unsigned char>(g));
+            file.put(static_cast<unsigned char>(b));
+        
+        //En caso contrario, utilizamos 2 bytes por canal
+        } else { 
+            file.put(static_cast<unsigned char>(r >> 8));
+            file.put(static_cast<unsigned char>(r & 0xFF));
+            file.put(static_cast<unsigned char>(g >> 8));
+            file.put(static_cast<unsigned char>(g & 0xFF));
+            file.put(static_cast<unsigned char>(b >> 8));
+            file.put(static_cast<unsigned char>(b & 0xFF));
+        }
     }
+
+    // A continuación, determinamos el tamaño del índice según las indicaciones del enunciado
+    int tamaño_indice;
+
+    //Si el tamaño de la lista de colores es 256 o menos (2^8), usamos 1 byte
+    if (color_list.size() <= 256) {
+        tamaño_indice = 1;
+    
+    
+    //Si el tamaño de la lista de colores es 65536 o menos (2^16), usamos 2 bytes
+    } else if (color_list.size() <= 65536) {
+        tamaño_indice = 2;
+    
+    
+    //Si el tamaño de la lista de colores es (2^32) o menos, usamos 4 bytes
+    } else if (color_list.size() <= 4294967296) {
+        tamaño_indice = 4;
+    
+    
+    //Si el tamaño de la lista de colores es mayor a 2^32, lanzamos una error
+    } else {
+        throw std::runtime_error("Error: No se soportan tablas de colores mayores a 2^32 colores");
+    }
+
+    // Por último, escribimos los indices de color para cada pixel
+    for (int i = 0; i < img.width * img.height; ++i) {
+        //Obtenemos el color del pixel [i] y su indice en el mapa de colores
+        auto color = std::make_tuple(img.redChannel[i], img.greenChannel[i], img.blueChannel[i]);
+        int indice_color = color_map[color];
+
+        //Escribimos el índice en el fichero
+        for (int j = 0; j < tamaño_indice; ++j) {
+            file.put(static_cast<unsigned char>((indice_color >> (8 * j)) & 0xFF));
+        }
+    }
+
+    // Si hay algun error a la hora de escribir, lanzamos un error
+    if (!file) {
+        throw std::runtime_error("Error: Fallo al escribir en el fichero de salida.");
+    }
+
+    // Cerramos el file
+    file.close();
 }
