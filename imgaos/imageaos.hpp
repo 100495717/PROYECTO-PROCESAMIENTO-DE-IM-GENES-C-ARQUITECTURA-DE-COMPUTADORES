@@ -20,7 +20,7 @@ public:
 
     // Constructor con parámetros
     ImageAos(int w, int h, int max_val) : width(w), height(h), max_color_value(max_val) {
-        pixels.resize(w * h);
+        pixels.resize(static_cast<std::vector<Pixel>::size_type>(w) * static_cast<std::vector<Pixel>::size_type>(h));
     }
 
     // Constructor que acepta una ruta de archivo

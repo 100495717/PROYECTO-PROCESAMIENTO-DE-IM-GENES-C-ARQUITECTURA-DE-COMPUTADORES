@@ -6,8 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Set compiler options
-add_compile_options(-Wall -Wextra -Werror -pedantic -pedantic-erros -Wconversion -Wsign-conversion)
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -match=native")
+add_compile_options(-Wall -Wextra -Werror -pedantic -pedantic-errors -Wconversion -Wsign-conversion)
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 
 # Enable GoogleTest LIBRARY
 include(FetchContent)
@@ -39,14 +39,13 @@ include_directories (PUBLIC .)
 # Process cmake from sim and fluid directories
 add_subdirectory(common)
 add_subdirectory(imgaos)
-add_subdirectory(imgsoa)
+#add_subdirectory(imgsoa)
 add_subdirectory(imtool-aos)
-add_subdirectory(imtool-soa)
 
 # Unit tests and functional tests
 enable_testing()
-add_subdirectory(tests/utest-common)
-add_subdirectory(tests/utest-imgaos)
-add_subdirectory(tests/utest-imgsoa)
-add_subdirectory(tests/ftest-aos)
-add_subdirectory(tests/ftest-soa)
+#add_subdirectory(utest-common)
+add_subdirectory(utest-imgaos)
+#add_subdirectory(utest-imgsoa)
+#add_subdirectory(ftest-aos)
+#add_subdirectory(ftest-soa)

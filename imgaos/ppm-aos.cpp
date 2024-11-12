@@ -1,5 +1,5 @@
 #include "imageaos.hpp"
-#include "binaryio.hpp"
+#include "../common/binaryio.hpp"
 #include <fstream>
 #include <iostream>
 
@@ -44,7 +44,7 @@ ImageAos read_ppm_image_aos(const std::string& filename) {
     // Inicializamos la imagen con el tamaño y el valor máximo de color
     ImageAos image(width, height, max_color_value);
 
-    image.pixels.resize(width * height);
+    image.pixels.resize(static_cast<std::vector<Pixel>::size_type>(width) * static_cast<std::vector<Pixel>::size_type>(height));
 
     for (auto& pixel : image.pixels) {
         if (max_color_value <= 255) {

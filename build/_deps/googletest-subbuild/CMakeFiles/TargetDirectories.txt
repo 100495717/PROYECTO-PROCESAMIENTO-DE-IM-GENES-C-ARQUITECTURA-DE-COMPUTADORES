@@ -1,3 +1,3 @@
-/home/hugoatm/ARQUITECTURA/PROYECTO/build/_deps/googletest-subbuild/CMakeFiles/googletest-populate.dir
-/home/hugoatm/ARQUITECTURA/PROYECTO/build/_deps/googletest-subbuild/CMakeFiles/edit_cache.dir
-/home/hugoatm/ARQUITECTURA/PROYECTO/build/_deps/googletest-subbuild/CMakeFiles/rebuild_cache.dir
+/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/googletest-subbuild/CMakeFiles/googletest-populate.dir
+/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/googletest-subbuild/CMakeFiles/edit_cache.dir
+/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/googletest-subbuild/CMakeFiles/rebuild_cache.dir

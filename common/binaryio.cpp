@@ -12,7 +12,9 @@ uint8_t BinaryReader::read_uint8() {
 
 uint16_t BinaryReader::read_uint16() {
    
-    uint16_t value = (buffer_[position_] << 8) | buffer_[position_ + 1];
+    uint16_t high_byte = static_cast<uint16_t>(buffer_[position_]);
+    uint16_t low_byte = static_cast<uint16_t>(buffer_[position_ + 1]);
+    uint16_t value = high_byte | low_byte;
     position_ += 2;
     return value;
 }

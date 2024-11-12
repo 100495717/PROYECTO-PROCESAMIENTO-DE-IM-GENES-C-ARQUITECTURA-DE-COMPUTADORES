@@ -1,0 +1,2 @@
+/usr/bin/ar qc libimgaos.a "CMakeFiles/imgaos.dir/image-operations-aos.cpp.o" "CMakeFiles/imgaos.dir/ppm-aos.cpp.o"
+/usr/bin/ranlib libimgaos.a

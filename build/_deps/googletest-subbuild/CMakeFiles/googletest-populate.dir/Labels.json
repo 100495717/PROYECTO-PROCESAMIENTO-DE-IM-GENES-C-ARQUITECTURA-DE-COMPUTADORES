@@ -2,37 +2,37 @@
 	"sources" : 
 	[
 		{
-			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO/build/_deps/googletest-subbuild/CMakeFiles/googletest-populate"
+			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/googletest-subbuild/CMakeFiles/googletest-populate"
 		},
 		{
-			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO/build/_deps/googletest-subbuild/CMakeFiles/googletest-populate.rule"
+			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/googletest-subbuild/CMakeFiles/googletest-populate.rule"
 		},
 		{
-			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO/build/_deps/googletest-subbuild/CMakeFiles/googletest-populate-complete.rule"
+			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/googletest-subbuild/CMakeFiles/googletest-populate-complete.rule"
 		},
 		{
-			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-build.rule"
+			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-build.rule"
 		},
 		{
-			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-configure.rule"
+			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-configure.rule"
 		},
 		{
-			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-download.rule"
+			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-download.rule"
 		},
 		{
-			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-install.rule"
+			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-install.rule"
 		},
 		{
-			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-mkdir.rule"
+			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-mkdir.rule"
 		},
 		{
-			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-patch.rule"
+			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-patch.rule"
 		},
 		{
-			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-test.rule"
+			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-test.rule"
 		},
 		{
-			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-update.rule"
+			"file" : "/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-update.rule"
 		}
 	],
 	"target" : 

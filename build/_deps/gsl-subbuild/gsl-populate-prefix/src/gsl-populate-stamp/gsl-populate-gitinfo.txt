@@ -3,9 +3,9 @@
 # No other meaning or use of this file is supported.
 
 method=git
-command=/opt/cmake/bin/cmake;-P;/home/hugoatm/ARQUITECTURA/PROYECTO/build/_deps/gsl-subbuild/gsl-populate-prefix/tmp/gsl-populate-gitclone.cmake
-source_dir=/home/hugoatm/ARQUITECTURA/PROYECTO/build/_deps/gsl-src
-work_dir=/home/hugoatm/ARQUITECTURA/PROYECTO/build/_deps
+command=/opt/cmake/bin/cmake;-P;/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/gsl-subbuild/gsl-populate-prefix/tmp/gsl-populate-gitclone.cmake
+source_dir=/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/gsl-src
+work_dir=/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps
 repository=https://github.com/microsoft/GSL
 remote=origin
 init_submodules=TRUE
