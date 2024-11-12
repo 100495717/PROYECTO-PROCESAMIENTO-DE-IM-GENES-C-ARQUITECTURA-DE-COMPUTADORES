@@ -1,29 +1,30 @@
-#include "imagesoa.hpp"
 #include "image-operations-soa.hpp"
+#include "../common/binaryio.hpp"
 #include <iostream>
 #include <algorithm>
 #include <vector>
 #include <map>
-#include <unordened_map>
-#include <unordened_set>
+#include <unordered_map>
+#include <unordered_set>
 #include <tuple>
 #include <limits>
 #include <future>
 #include <execution>
-
+#include <cmath>
+#include <fstream>
 
 
 //FUNCION INFO
 void print_image_info_soa(const ImageSoa& img) {
-    std::cout << "Image width: " << img.width << std::endl;
-    std::cout << "Image height: " << img.height << std::endl;
+    std::cout << "Ancho: " << img.width << std::endl;
+    std::cout << "Altp: " << img.height << std::endl;
     std::cout << "Valor máximo de color" << img.max_color_value << std::endl;
-    std::cout << "Total pixels: " << img.width * img.height << std::endl;
+    std::cout << "Pixeles totales: " << img.width * img.height << std::endl;
 }
 
 
 void max_level(ImageSoa& img, int maxlevel) {
-    //Comprobamos que el nuevo max level es correcto
+    // Comprobamos que el nuevo max level es correcto
     if (maxlevel <= 0 || maxlevel > 65535) {
         throw std::invalid_argument("El nivel máximo debe ser mayor a cero y menor o igual a 65535.");
     }
@@ -39,134 +40,57 @@ void max_level(ImageSoa& img, int maxlevel) {
     std::cout << "Factor de escala calculado: " << scale << std::endl;
 
     // Calculamos el nuevo valor de cada pixel (RGB)
-    for (size_t i = 0; i < img.redChannel.size(); ++i) {
-        if (i < 10) {
-            std::cout << "[Antes del escalado] Pixel " << i
-                      << " - R: " << img.redChannel[i]
-                      << ", G: " << img.greenChannel[i]
-                      << ", B: " << img.blueChannel[i] << std::endl;
-        }
+    for (size_t i = 0; i < img.r.size(); ++i) {
+        // Para evitar desbordamientos, nos aseguramos de que los nuevos valores no excedan el limite(65535)
+        int scaledRed = std::min(static_cast<int>(std::floor(img.r[i] * scale)), 65535);
+        int scaledGreen = std::min(static_cast<int>(std::floor(img.g[i] * scale)), 65535);
+        int scaledBlue = std::min(static_cast<int>(std::floor(img.b[i] * scale)), 65535);
 
-        //Para evitar desbordamientos, nos aseguramos de que los nuevos valores no excedan el limite(65535)
-        int scaledRed = std::min(static_cast<int>(std::floor(img.redChannel[i] * scale)), 65535);
-        int scaledGreen = std::min(static_cast<int>(std::floor(img.greenChannel[i] * scale)), 65535);
-        int scaledBlue = std::min(static_cast<int>(std::floor(img.blueChannel[i] * scale)), 65535);
-
-        //Utilizamos unsigned short para que podamos representar (0-65535)
-        img.redChannel[i] = static_cast<unsigned short>(scaledRed);
-        img.greenChannel[i] = static_cast<unsigned short>(scaledGreen);
-        img.blueChannel[i] = static_cast<unsigned short>(scaledBlue);
-
-        //Estos prints son de depuracion, hay que quitarlos
-        if (i < 10) {
-            std::cout << "[Después del escalado] Pixel " << i
-                      << " - R: " << img.redChannel[i]
-                      << ", G: " << img.greenChannel[i]
-                      << ", B: " << img.blueChannel[i] << std::endl;
-        }
+        // Utilizamos unsigned short para que podamos representar (0-65535)
+        img.r[i] = static_cast<unsigned short>(scaledRed);
+        img.g[i] = static_cast<unsigned short>(scaledGreen);
+        img.b[i] = static_cast<unsigned short>(scaledBlue);
     }
 
-    // Actualizamos el valor máximo de color después del escalado
+    // Actualiza el valor máximo de color después del escalado
     img.max_color_value = maxlevel;
     std::cout << "Escalado completado con nuevo valor máximo: " << img.max_color_value << std::endl;
 }
 
-
-
-//RESIZE
-//Función que combina los cuatro pixeles vecinos de un pixel dadas sus coordenadas (x,y)
-unsigned short interpolacionBilineal(double x, double y,
-                                    unsigned short c00, unsigned short c10,
-                                    unsigned short c01, unsigned short c11) {
-    // Calculamos mediante la interpolacion c1, en el eje x entre c00 y c10 
-    double c1 = c00 * (1 - x) + c10 * x;
-    // Calculamos mediante la interpolacion c2, en el eje x entre c01 y c11
-    double c2 = c01 * (1 - x) + c11 * x;
-    // Devolvemos el valor final de la interpolacion en el eje y
-    //Se suma 0.5 para redondear al entero mas cercano
-    return static_cast<unsigned short>(c1 * (1 - y) + c2 * y + 0.5);
-} 
-
-//Funcion resize
-void resize_image(ImageSoA& img, int new_width, int new_height) {
-    //Comprobamos que las dimensiones introducidas son correcctas
-    if (new_width <= 0 || new_height <= 0) {
-        throw std::invalid_argument("Las dimensiones de la imagen deben ser mayores a cero.");
-    }
-
-    // Creamos nuevos canales de color para la nueva imagen redimensionada
-    std::vector<unsigned short> new_redChannel(new_width * new_height);
-    std::vector<unsigned short> new_greenChannel(new_width * new_height);
-    std::vector<unsigned short> new_blueChannel(new_width * new_height);
-
-    //Calculamos la relacion entre w/w` y entre h/h`
-    double x_ratio = static_cast<double>(img.width) / new_width;
-    double y_ratio = static_cast<double>(img.height) / new_height;
-
-    //Para cada posición de la nueva imagen:
-    for (int y = 0; y < new_height; ++y) {
-        for (int x = 0; x < new_width; ++x) {
-            // Calculamos las coordenadas: x= x*x_ratio ;  y=y*y_ratio
-            double gx = x * x_ratio;
-            double gy = y * y_ratio;
-
-            // Determinamos los 4 pixeles más próximos en la imagen original:
-            int xl = static_cast<int>(std::floor(gx));
-            int xh = std::min(static_cast<int>(std::ceil(gx)), img.width - 1);
-            int yl = static_cast<int>(std::floor(gy));
-            int yh = std::min(static_cast<int>(std::ceil(gy)), img.height - 1);
-
-            // Calculamos la diferencias correspondientes desde la posición de la imagen original
-            double diferencia_x = gx - xl;
-            double diferencia_y = gy - yl;
-
-            // Calculamos los nuevos índices de los pixeles adyacentes
-            int indice00 = yl * img.width + xl;
-            int indice10 = yl * img.width + xh;
-            int indice01 = yh * img.width + xl;
-            int indice11 = yh * img.width + xh;
-
-            // Aplicamos la interpolacion bilineal en todos los arrays del struct ImageSoA (redChannel,blueChannel,greenChannel)
-            new_redChannel[y * new_width + x] = interpolacionBilineal(
-                diferencia_x, diferencia_y,
-                img.redChannel[indice00], img.redChannel[indice10],
-                img.redChannel[indice01], img.redChannel[indice11]
-            );
-
-            new_greenChannel[y * new_width + x] = interpolacionBilineal(
-                diferencia_x, diferencia_y,
-                img.greenChannel[indice00], img.greenChannel[indice10],
-                img.greenChannel[indice01], img.greenChannel[indice11]
-            );
-
-            new_blueChannel[y * new_width + x] = interpolacionBilineal(
-                diferencia_x, diferencia_y,
-                img.blueChannel[indice00], img.blueChannel[indice10],
-                img.blueChannel[indice01], img.blueChannel[indice11]
-            );
+void resize_image_soa(ImageSoa& img, int width, int height) {
+    std::vector<uint16_t> new_r(static_cast<std::vector<uint16_t>::size_type>(width) * static_cast<std::vector<uint16_t>::size_type>(height));
+    std::vector<uint16_t> new_g(static_cast<std::vector<uint16_t>::size_type>(width) * static_cast<std::vector<uint16_t>::size_type>(height));
+    std::vector<uint16_t> new_b(static_cast<std::vector<uint16_t>::size_type>(width) * static_cast<std::vector<uint16_t>::size_type>(height));
+    double x_ratio = static_cast<double>(img.width) / width;
+    double y_ratio = static_cast<double>(img.height) / height;
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            int px = static_cast<int>(x * x_ratio);
+            int py = static_cast<int>(y * y_ratio);
+            new_r[static_cast<std::vector<uint16_t>::size_type>(y) * static_cast<std::vector<uint16_t>::size_type>(width) + static_cast<std::vector<uint16_t>::size_type>(x)] = img.r[static_cast<std::vector<uint16_t>::size_type>(py) * static_cast<std::vector<uint16_t>::size_type>(img.width) + static_cast<std::vector<uint16_t>::size_type>(px)];
+            new_g[static_cast<std::vector<uint16_t>::size_type>(y) * static_cast<std::vector<uint16_t>::size_type>(width) + static_cast<std::vector<uint16_t>::size_type>(x)] = img.g[static_cast<std::vector<uint16_t>::size_type>(py) * static_cast<std::vector<uint16_t>::size_type>(img.width) + static_cast<std::vector<uint16_t>::size_type>(px)];
+            new_b[static_cast<std::vector<uint16_t>::size_type>(y) * static_cast<std::vector<uint16_t>::size_type>(width) + static_cast<std::vector<uint16_t>::size_type>(x)] = img.b[static_cast<std::vector<uint16_t>::size_type>(py) * static_cast<std::vector<uint16_t>::size_type>(img.width) + static_cast<std::vector<uint16_t>::size_type>(px)];
         }
     }
-
-    // Actualizamos las dimensiones
-    img.width = new_width;
-    img.height = new_height;
-
-    // Actualizamos los arrays de los colores de la imagen
-    img.redChannel = std::move(new_redChannel);
-    img.greenChannel = std::move(new_greenChannel);
-    img.blueChannel = std::move(new_blueChannel);
+    img.width = width;
+    img.height = height;
+    img.r = std::move(new_r);
+    img.g = std::move(new_g);
+    img.b = std::move(new_b);
 }
 
-//CUTFREQ
-//1. Definimos un array donde almacenaremos los componentes RGB de cada pixel
+// CUTFREQ
+// 1. Definimos un array donde almacenaremos los componentes RGB de cada pixel
 using Color = std::array<unsigned short, 3>;
 
 //2. Para poder acceder rapidamente a la frecuencia de cada color, creamos una estructura hash
 //Esta estructura, nos permitira calcular un hash unico por Color
 struct HashColor {
     std::size_t operator()(const Color& color) const {
-        //Desplazamos y combinamos los bits RGB 
-        return (color[0] << 16) | (color[1] << 8) | color[2];
+        //Desplazamos y combinamos los bits RGB
+        return (static_cast<std::size_t>(color[0]) << 16) |
+               (static_cast<std::size_t>(color[1]) << 8) |
+               static_cast<std::size_t>(color[2]);
     }
 };
 
@@ -189,33 +113,30 @@ struct KDTree {
     };
 
     //Nodo raiz
-    Node* root; 
+   Node* root;
 
-    //Construimos el árbol dado un vector de colores
-    KDTree(const std::vector<Color>& colors) {
-        root = build(colors, 0);
-    }
+// Construimos el árbol dado un vector de colores
+KDTree(const std::vector<Color>& colors) {
+    root = build(colors, 0);
+}
 
-    //Creamos una funcion recursiva en profundidad para construir el KDTree
-    Node* build(const std::vector<Color>& colors, int depth) {
-        if (colors.empty()) return nullptr; //Si el arbol esta vacio, devolvemos nullptr
+// Creamos una función recursiva en profundidad para construir el KDTree
+Node* build(const std::vector<Color>& colors, int depth) {
+    if (colors.empty()) return nullptr; // Si el árbol está vacío, devolvemos nullptr
+    int axis = depth % 3;
+    auto sortedColors = colors;
+    std::nth_element(sortedColors.begin(), sortedColors.begin() + static_cast<std::vector<Color>::difference_type>(sortedColors.size() / 2), sortedColors.end(),
+                     [axis](const Color& a, const Color& b) {
+                         return a[static_cast<std::array<unsigned short, 3>::size_type>(axis)] < b[static_cast<std::array<unsigned short, 3>::size_type>(axis)];
+                     });
+    auto median = static_cast<std::vector<Color>::size_type>(sortedColors.size() / 2);
+    Node* node = new Node{sortedColors[median], nullptr, nullptr};
+    node->left = build(std::vector<Color>(sortedColors.begin(), sortedColors.begin() + static_cast<std::vector<Color>::difference_type>(median)), depth + 1);
+    node->right = build(std::vector<Color>(sortedColors.begin() + static_cast<std::vector<Color>::difference_type>(median) + 1, sortedColors.end()), depth + 1);
+    return node;
+}
 
-        int axis = depth % 3;
-        auto sortedColors = colors;
-        std::nth_element(sortedColors.begin(), sortedColors.begin() + sortedColors.size() / 2, sortedColors.end(),
-                         [axis](const Color& a, const Color& b) {
-                             return a[axis] < b[axis];
-                         });
-
-        int median = sortedColors.size() / 2;
-        Node* node = new Node{sortedColors[median], nullptr, nullptr};
-        node->left = build(std::vector<Color>(sortedColors.begin(), sortedColors.begin() + median), depth + 1);
-        node->right = build(std::vector<Color>(sortedColors.begin() + median + 1, sortedColors.end()), depth + 1);
-
-        return node;
-    }
-
-    // Método que encuentra el color más cercano a target. Busqueda recursiva
+    // Méto do que encuentra el color más cercano a target. Busqueda recursiva
     Color nearestNeighbor(const Color& target, Node* node, int depth, Color best, int& bestDist) const {
         //Caso base: si llegamos a un nodo nullptr, devolvemos el color mas cercano hasta ahora
         if (!node) return best;
@@ -231,16 +152,15 @@ struct KDTree {
         }
 
         //Determinamos next, que es el subárbol que nos conviene explorar
-        Node* next = (target[axis] < node->color[axis]) ? node->left : node->right;
-
+        Node* next = (target[static_cast<std::array<uint16_t, 3>::size_type>(axis)] < node->color[static_cast<std::array<uint16_t, 3>::size_type>(axis)]) ? node->left : node->right;
         //En caso de tener que seguir explorando, se buscará por el subárbol other
         Node* other = (next == node->left) ? node->right : node->left;
 
-        //Llamamos de nuevo al método recursivamente (busqueda en profundidad)
+        //Llamamos de nuevo al méto do recursivamente (busqueda en profundidad)
         best = nearestNeighbor(target, next, depth + 1, best, bestDist);
 
         //En caso de que podamos encontrar un mejor color, buscamos por el subarbol other
-        if ((target[axis] - node->color[axis]) * (target[axis] - node->color[axis]) < bestDist) {
+        if ((target[static_cast<std::array<uint16_t, 3>::size_type>(axis)] - node->color[static_cast<std::array<uint16_t, 3>::size_type>(axis)]) * (target[static_cast<std::array<uint16_t, 3>::size_type>(axis)] - node->color[static_cast<std::array<uint16_t, 3>::size_type>(axis)]) < bestDist) {
             best = nearestNeighbor(target, other, depth + 1, best, bestDist);
         }
 
@@ -248,7 +168,7 @@ struct KDTree {
         return best;
     }
 
-    //Método público que busca el vecino mas cercano llamando al método anterior
+    //Méto do público que busca el vecino mas cercano llamando al méto do anterior
     Color nearestNeighbor(const Color& target) const {
         int bestDist = std::numeric_limits<int>::max();
         return nearestNeighbor(target, root, 0, root->color, bestDist);
@@ -258,7 +178,7 @@ struct KDTree {
     ~KDTree() { deleteTree(root); }
 
 private:
-    //Método que destruye los nodos del árbol creado
+    //Méto do que destruye los nodos del árbol creado
     void deleteTree(Node* node) {
         if (!node) return;
         deleteTree(node->left);
@@ -268,14 +188,14 @@ private:
 };
 
 // Función principal cutfreq
-void cutfreq(ImageSoA& imagen, int n) {
+void cutfreq(ImageSoa& imagen, int n) {
     //Primero contamos la frecuencia de cada color, para ello usamos unordened_map
     //Unordened_map nos permite ubicar rapidamente cada color y ver su frecuencia con la estructura Hash creada antes
     std::unordered_map<Color, int, HashColor> frecuenciaColor;
-    for (size_t i = 0; i < imagen.redChannel.size(); ++i) {
-        Color color = {static_cast<unsigned short>(imagen.redChannel[i]),
-                       static_cast<unsigned short>(imagen.greenChannel[i]),
-                       static_cast<unsigned short>(imagen.blueChannel[i])};
+    for (size_t i = 0; i < imagen.r.size(); ++i) {
+        Color color = {static_cast<unsigned short>(imagen.r[i]),
+                       static_cast<unsigned short>(imagen.g[i]),
+                       static_cast<unsigned short>(imagen.b[i])};
         ++frecuenciaColor[color];
     }
 
@@ -288,9 +208,9 @@ void cutfreq(ImageSoA& imagen, int n) {
     std::vector<std::pair<Color, int>> vecFrecuenciaColor(frecuenciaColor.begin(), frecuenciaColor.end());
     std::nth_element(vecFrecuenciaColor.begin(), vecFrecuenciaColor.begin() + n, vecFrecuenciaColor.end(),
                      [](const auto& a, const auto& b) { return a.second < b.second; });
-    
+
     //Reducimos el vector para que solo tenga los n colores menos frecuentes
-    vecFrecuenciaColor.resize(n);
+    vecFrecuenciaColor.resize(static_cast<std::vector<std::pair<std::array<unsigned short, 3>, int>>::size_type>(n));
 
     //Esos colores menos frecuentes, los añadimos al conjunto coloresMenosFrecuentes
     std::unordered_set<Color, HashColor> coloresMenosFrecuentes;
@@ -298,7 +218,7 @@ void cutfreq(ImageSoA& imagen, int n) {
         coloresMenosFrecuentes.insert(color.first);
     }
 
-    //Creamos un vector con los colores restantes 
+    //Creamos un vector con los colores restantes
     std::vector<Color> coloresRestantes;
     for (const auto& color : frecuenciaColor) {
         if (!coloresMenosFrecuentes.count(color.first)) {
@@ -316,26 +236,24 @@ void cutfreq(ImageSoA& imagen, int n) {
     }
 
     //Recorremos  todos los pixeles de la imagen para sustituir aquellos que hagan falta
-    for (size_t i = 0; i < imagen.redChannel.size(); ++i) {
-        Color color = {static_cast<unsigned short>(imagen.redChannel[i]),
-                       static_cast<unsigned short>(imagen.greenChannel[i]),
-                       static_cast<unsigned short>(imagen.blueChannel[i])};
+    for (size_t i = 0; i < imagen.r.size(); ++i) {
+        Color color = {static_cast<unsigned short>(imagen.r[i]),
+                       static_cast<unsigned short>(imagen.g[i]),
+                       static_cast<unsigned short>(imagen.b[i])};
 
         //Reemplazamos el color eliminado por su color más cercano en la imagen
 
         if (coloresMenosFrecuentes.count(color)) {
             Color colorReemplazo = mapaReemplazo[color];
-            imagen.redChannel[i] = colorReemplazo[0];
-            imagen.greenChannel[i] = colorReemplazo[1];
-            imagen.blueChannel[i] = colorReemplazo[2];
+            imagen.r[i] = colorReemplazo[0];
+            imagen.g[i] = colorReemplazo[1];
+            imagen.b[i] = colorReemplazo[2];
         }
     }
 }
 
-
-
 //COMPRESS
-void compress_image(const ImageSoA& img, const std::string& output) {
+void compress_image_soa(const ImageSoa& img, const std::string& output) {
     // Creamos el archivo donde vamos a escribir la imagen en formato CPPM
     std::ofstream file(output, std::ios::binary);
 
@@ -345,10 +263,15 @@ void compress_image(const ImageSoA& img, const std::string& output) {
     }
 
     // Escribimos el número mágico para archivos en formatoCPPM (con un espacio en blanco)
-    file << "C6 ";
-
-    // Escribimos la anchura altura y valor maximo en decimal con espacios en blanco entre ellos
-    file << img.width << " " << img.height << " " << img.max_color_value << " ";
+    BinaryWriter writer(file);
+    // Escribir un encabezado simple para el archivo comprimido
+    writer.write_string("C6 ");
+    writer.write_ascii_int(img.width);
+    writer.write_string(" ");
+    writer.write_ascii_int(img.height);
+    writer.write_string(" ");
+    writer.write_ascii_int(img.max_color_value);
+    writer.write_string(" ");
 
     // Creamos un mapa para cada color, y asi poder contar cuantos colores únicos hay en la imagen de entrada
     std::map<std::tuple<unsigned short, unsigned short, unsigned short>, int> color_map;
@@ -360,7 +283,9 @@ void compress_image(const ImageSoA& img, const std::string& output) {
     // Para cada pixel en la imagen:
     for (int i = 0; i < img.width * img.height; ++i) {
         // Obtenemos el color de ese pixel combinando los valores RGB
-        auto color = std::make_tuple(img.redChannel[i], img.greenChannel[i], img.blueChannel[i]);
+        auto color = std::make_tuple(img.r[static_cast<std::vector<unsigned short>::size_type>(i)],
+                             img.g[static_cast<std::vector<unsigned short>::size_type>(i)],
+                             img.b[static_cast<std::vector<unsigned short>::size_type>(i)]);
 
         // Agregamos el color al mapa de colores si no se habia añadido antes
         if (color_map.find(color) == color_map.end()) {
@@ -370,27 +295,22 @@ void compress_image(const ImageSoA& img, const std::string& output) {
     }
 
     // Escribimos cuantas entradas hay en la tabla de colores (seguido de un salto de linea)
-    file << color_list.size() << "\n";
+    writer.write_string("\n");
 
     // Escribimos dicha tabla de colores
     for (const auto& color : color_list) {
         unsigned short r, g, b;
         std::tie(r, g, b) = color;
-        
-        //Si maxval<=255 entonces usamos 1 byte por canal
+
+        // Si maxval <= 255 entonces usamos 1 byte por canal
         if (img.max_color_value <= 255) {
-            file.put(static_cast<unsigned char>(r));
-            file.put(static_cast<unsigned char>(g));
-            file.put(static_cast<unsigned char>(b));
-        
-        //En caso contrario, utilizamos 2 bytes por canal
-        } else { 
-            file.put(static_cast<unsigned char>(r >> 8));
-            file.put(static_cast<unsigned char>(r & 0xFF));
-            file.put(static_cast<unsigned char>(g >> 8));
-            file.put(static_cast<unsigned char>(g & 0xFF));
-            file.put(static_cast<unsigned char>(b >> 8));
-            file.put(static_cast<unsigned char>(b & 0xFF));
+            writer.write_uint8(static_cast<unsigned char>(r));
+            writer.write_uint8(static_cast<unsigned char>(g));
+            writer.write_uint8(static_cast<unsigned char>(b));
+        } else { // En caso contrario, utilizamos 2 bytes por canal
+            writer.write_uint16(static_cast<unsigned char>(r));
+            writer.write_uint16(static_cast<unsigned char>(g));
+            writer.write_uint16(static_cast<unsigned char>(b));
         }
     }
 
@@ -400,18 +320,18 @@ void compress_image(const ImageSoA& img, const std::string& output) {
     //Si el tamaño de la lista de colores es 256 o menos (2^8), usamos 1 byte
     if (color_list.size() <= 256) {
         tamaño_indice = 1;
-    
-    
+
+
     //Si el tamaño de la lista de colores es 65536 o menos (2^16), usamos 2 bytes
     } else if (color_list.size() <= 65536) {
         tamaño_indice = 2;
-    
-    
+
+
     //Si el tamaño de la lista de colores es (2^32) o menos, usamos 4 bytes
     } else if (color_list.size() <= 4294967296) {
         tamaño_indice = 4;
-    
-    
+
+
     //Si el tamaño de la lista de colores es mayor a 2^32, lanzamos una error
     } else {
         throw std::runtime_error("Error: No se soportan tablas de colores mayores a 2^32 colores");
@@ -420,12 +340,14 @@ void compress_image(const ImageSoA& img, const std::string& output) {
     // Por último, escribimos los indices de color para cada pixel
     for (int i = 0; i < img.width * img.height; ++i) {
         //Obtenemos el color del pixel [i] y su indice en el mapa de colores
-        auto color = std::make_tuple(img.redChannel[i], img.greenChannel[i], img.blueChannel[i]);
+        auto color = std::make_tuple(img.r[static_cast<std::vector<unsigned short>::size_type>(i)],
+                             img.g[static_cast<std::vector<unsigned short>::size_type>(i)],
+                             img.b[static_cast<std::vector<unsigned short>::size_type>(i)]);
         int indice_color = color_map[color];
 
         //Escribimos el índice en el fichero
         for (int j = 0; j < tamaño_indice; ++j) {
-            file.put(static_cast<unsigned char>((indice_color >> (8 * j)) & 0xFF));
+            writer.write_uint8(static_cast<uint8_t>((indice_color >> (i * 8)) & 0xFF));
         }
     }
 

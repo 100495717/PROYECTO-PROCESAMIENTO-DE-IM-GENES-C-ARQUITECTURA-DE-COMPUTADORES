@@ -1,5 +1,5 @@
 #include "imagesoa.hpp"
-#include "binaryio.hpp"
+#include "../common/binaryio.hpp"
 #include <fstream>
 #include <iostream>
 
@@ -46,13 +46,13 @@ ImageSoa read_ppm_image_soa(const std::string& filename) {
 
     for (int i = 0; i < width * height; ++i) {
         if (max_color_value <= 255) {
-            image.r[i] = reader.read_uint8();
-            image.g[i] = reader.read_uint8();
-            image.b[i] = reader.read_uint8();
+            image.r[static_cast<std::vector<uint16_t>::size_type>(i)] = reader.read_uint8();
+            image.g[static_cast<std::vector<uint16_t>::size_type>(i)] = reader.read_uint8();
+            image.b[static_cast<std::vector<uint16_t>::size_type>(i)] = reader.read_uint8();
         } else {
-            image.r[i] = reader.read_uint16();
-            image.g[i] = reader.read_uint16();
-            image.b[i] = reader.read_uint16();
+            image.r[static_cast<std::vector<uint16_t>::size_type>(i)] = reader.read_uint16();
+            image.g[static_cast<std::vector<uint16_t>::size_type>(i)] = reader.read_uint16();
+            image.b[static_cast<std::vector<uint16_t>::size_type>(i)] = reader.read_uint16();
         }
     }
 
@@ -77,13 +77,13 @@ void write_ppm_image_soa(const std::string& filename, const ImageSoa& img) {
 
     for (int i = 0; i < img.width * img.height; ++i) {
         if (img.max_color_value <= 255) {
-            writer.write_uint8(static_cast<uint8_t>(img.r[i]));
-            writer.write_uint8(static_cast<uint8_t>(img.g[i]));
-            writer.write_uint8(static_cast<uint8_t>(img.b[i]));
+            writer.write_uint8(static_cast<uint8_t>(img.r[static_cast<std::vector<uint16_t>::size_type>(i)]));
+            writer.write_uint8(static_cast<uint8_t>(img.g[static_cast<std::vector<uint16_t>::size_type>(i)]));
+            writer.write_uint8(static_cast<uint8_t>(img.b[static_cast<std::vector<uint16_t>::size_type>(i)]));
         } else {
-            writer.write_uint16(img.r[i]);
-            writer.write_uint16(img.g[i]);
-            writer.write_uint16(img.b[i]);
+            writer.write_uint16(img.r[static_cast<std::vector<uint16_t>::size_type>(i)]);
+            writer.write_uint16(img.g[static_cast<std::vector<uint16_t>::size_type>(i)]);
+            writer.write_uint16(img.b[static_cast<std::vector<uint16_t>::size_type>(i)]);
         }
     }
 }
