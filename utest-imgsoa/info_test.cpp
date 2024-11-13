@@ -23,7 +23,7 @@ TEST(info, info_normal) {
     print_image_info_soa(img);
 
     std::cout.rdbuf(old);
-    std::string const expected = "Ancho: 4\nAlto: 4\nValor máximo de color: 255\nPixeles totales: 16\n";
+    std::string const expected = "Ancho: 4\nAlto: 4\nValor máximo de color: 255\n";
     EXPECT_EQ(buffer.str(), expected);
 }
 
@@ -41,7 +41,7 @@ TEST(info, info_empty_image) {
     print_image_info_soa(img);
 
     std::cout.rdbuf(old);
-    std::string const expected = "Ancho: 0\nAlto: 0\nValor máximo de color: 255\nPixeles totales: 0\n";
+    std::string const expected = "Ancho: 0\nAlto: 0\nValor máximo de color: 255\n";
     EXPECT_EQ(buffer.str(), expected);
 }
 
@@ -60,6 +60,6 @@ TEST(info, info_big_image) {
     print_image_info_soa(img);
 
     std::cout.rdbuf(old);
-    std::string const expected = "Ancho: 1000\nAlto: 1000\nValor máximo de color: 255\nPixeles totales: 1000000\n";
+    std::string const expected = "Ancho: 1000\nAlto: 1000\nValor máximo de color: 255\n";
     EXPECT_EQ(buffer.str(), expected);
 }

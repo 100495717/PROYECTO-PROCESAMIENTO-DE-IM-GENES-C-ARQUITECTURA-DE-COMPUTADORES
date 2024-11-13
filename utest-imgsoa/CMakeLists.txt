@@ -2,6 +2,7 @@
 # For example, you mas have one *_test.cpp fpr each *.cpp in img-soa
 add_executable(utest-imgsoa
 
+    compress_test.cpp
     cutfreq_test.cpp
     resize_test.cpp
     info_test.cpp
