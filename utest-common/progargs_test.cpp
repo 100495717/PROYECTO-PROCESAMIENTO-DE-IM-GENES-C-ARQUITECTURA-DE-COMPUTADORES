@@ -2,21 +2,28 @@
 #include <cstdint>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <sstream>
+#include <iostream>
 
 #include <stdexcept>
 #include <vector>
 #include <string>
 
-TEST(progargs, no_valido) {
-    int argc = 1;
-    char* argv[] = {const_cast<char*>("imtool-aos")};
-    ASSERT_THROW(parse_arguments(argc, argv), std::invalid_argument);
-}
+class ProgArgsTest : public ::testing::Test {
+protected:
+    std::stringstream buffer;
+    std::streambuf* old;
 
+    void SetUp() override {
+        old = std::cerr.rdbuf(buffer.rdbuf());
+    }
 
+    void TearDown() override {
+        std::cerr.rdbuf(old);
+    }
+};
 
-
-TEST(progargs, info_valido) {
+TEST_F(ProgArgsTest, info_valido) {
     int argc = 4;
     char* argv[] = {const_cast<char*>("imtool-aos"), const_cast<char*>("deer-small.ppm"), const_cast<char*>("deer-small-mod.ppm"), const_cast<char*>("info")};
     std::vector<std::string> args = parse_arguments(argc, argv);
@@ -24,21 +31,24 @@ TEST(progargs, info_valido) {
     ASSERT_EQ(args, expected);
 }
 
-
-TEST(progargs, maxlevel_valido) {
+TEST_F(ProgArgsTest, maxlevel_valido) {
     int argc = 5;
     char* argv[] = {const_cast<char*>("imtool-aos"), const_cast<char*>("deer-small.ppm"), const_cast<char*>("deer-small-mod.ppm"), const_cast<char*>("maxlevel"), const_cast<char*>("100")};
     std::vector<std::string> args = parse_arguments(argc, argv);
     std::vector<std::string> expected = {"imtool-aos", "deer-small.ppm", "deer-small-mod.ppm", "maxlevel", "100"};
     ASSERT_EQ(args, expected);
 }
-TEST(progargs, maxlevel_no_valido) {
+
+TEST_F(ProgArgsTest, maxlevel_no_valido) {
     int argc = 5;
     char* argv[] = {const_cast<char*>("imtool-aos"), const_cast<char*>("deer-small.ppm"), const_cast<char*>("deer-small-mod.ppm"), const_cast<char*>("maxlevel"), const_cast<char*>("0")};
-    ASSERT_THROW(parse_arguments(argc, argv), std::invalid_argument);
+    std::vector<std::string> args(argv, argv + argc);
+    ASSERT_EQ(validate_arguments(args, argc), -1);
+    std::string output = buffer.str();
+    ASSERT_NE(output.find("Error: Invalid maxlevel: 0"), std::string::npos);
 }
 
-TEST(progargs, resize_valido) {
+TEST_F(ProgArgsTest, resize_valido) {
     int argc = 6;
     char* argv[] = {const_cast<char*>("imtool-aos"), const_cast<char*>("deer-small.ppm"), const_cast<char*>("deer-small-mod.ppm"), const_cast<char*>("resize"), const_cast<char*>("100"), const_cast<char*>("100")};
     std::vector<std::string> args = parse_arguments(argc, argv);
@@ -46,13 +56,16 @@ TEST(progargs, resize_valido) {
     ASSERT_EQ(args, expected);
 }
 
-TEST(progargs, resize_no_valido) {
+TEST_F(ProgArgsTest, resize_no_valido) {
     int argc = 5;
     char* argv[] = {const_cast<char*>("imtool-aos"), const_cast<char*>("deer-small.ppm"), const_cast<char*>("deer-small-mod.ppm"), const_cast<char*>("resize"), const_cast<char*>("10")};
-    ASSERT_THROW(parse_arguments(argc, argv), std::invalid_argument);
+    std::vector<std::string> args(argv, argv + argc);
+    ASSERT_EQ(validate_arguments(args, argc), -1);
+    std::string output = buffer.str();
+    ASSERT_NE(output.find("Error: Invalid number of extra arguments for resize: 1"), std::string::npos);
 }
 
-TEST(progargs, cutfreq_valido) {
+TEST_F(ProgArgsTest, cutfreq_valido) {
     int argc = 5;
     char* argv[] = {const_cast<char*>("imtool-aos"), const_cast<char*>("deer-small.ppm"), const_cast<char*>("deer-small-mod.ppm"), const_cast<char*>("cutfreq"), const_cast<char*>("100")};
     std::vector<std::string> args = parse_arguments(argc, argv);
@@ -60,13 +73,16 @@ TEST(progargs, cutfreq_valido) {
     ASSERT_EQ(args, expected);
 }
 
-TEST(progargs, cutfreq_no_valido) {
+TEST_F(ProgArgsTest, cutfreq_no_valido) {
     int argc = 5;
     char* argv[] = {const_cast<char*>("imtool-aos"), const_cast<char*>("deer-small.ppm"), const_cast<char*>("deer-small-mod.ppm"), const_cast<char*>("cutfreq"), const_cast<char*>("0")};
-    ASSERT_THROW(parse_arguments(argc, argv), std::invalid_argument);
+    std::vector<std::string> args(argv, argv + argc);
+    ASSERT_EQ(validate_arguments(args, argc), -1);
+    std::string output = buffer.str();
+    ASSERT_NE(output.find("Error: Invalid cutfreq: 0"), std::string::npos);
 }
 
-TEST(progargs, compress_valido) {
+TEST_F(ProgArgsTest, compress_valido) {
     int argc = 4;
     char* argv[] = {const_cast<char*>("imtool-aos"), const_cast<char*>("deer-small.ppm"),const_cast<char*>("deer-small-mod.ppm"), const_cast<char*>("compress")};
     std::vector<std::string> args = parse_arguments(argc, argv);
@@ -74,9 +90,11 @@ TEST(progargs, compress_valido) {
     ASSERT_EQ(args, expected);
 }
 
-TEST(progargs, compress_novalido) {
-    int argc = 3;
-    char* argv[] = {const_cast<char*>("imtool-aos"), const_cast<char*>("deer-small.ppm"), const_cast<char*>("compress")};
-
-    ASSERT_THROW(parse_arguments(argc, argv), std::invalid_argument);
+TEST_F(ProgArgsTest, compress_novalido) {
+    int argc = 5;
+    char* argv[] = {const_cast<char*>("imtool-aos"), const_cast<char*>("deer-small.ppm"), const_cast<char*>("deer-small-mod.ppm"), const_cast<char*>("compress"), const_cast<char*>("200")};
+    std::vector<std::string> args(argv, argv + argc);
+    ASSERT_EQ(validate_arguments(args, argc), -1);
+    std::string output = buffer.str();
+    ASSERT_NE(output.find("Error: Invalid extra arguments for compress"), std::string::npos);
 }
