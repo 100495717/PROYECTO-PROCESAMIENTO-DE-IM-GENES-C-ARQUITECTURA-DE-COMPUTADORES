@@ -85,6 +85,13 @@ void BinaryWriter::write_uint16(uint16_t value) const {
     ofs_.write(reinterpret_cast<const char*>(&value), sizeof(uint16_t));
 }
 
+void BinaryWriter::write_uint32(uint32_t value) const {
+    if (!ofs_) {
+        throw std::ios_base::failure("Error al escribir en el archivo de salida");
+    }
+    ofs_.write(reinterpret_cast<const char*>(&value), sizeof(uint32_t));
+}
+
 void BinaryWriter::write_string(const std::string& value) const {
     if (!ofs_) {
         throw std::ios_base::failure("Error al escribir en el archivo de salida");

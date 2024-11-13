@@ -32,8 +32,10 @@ public:
 
     void write_uint8(uint8_t value) const;
     void write_uint16(uint16_t value) const;
+    void write_uint32(uint32_t value) const;
     void write_string(const std::string& value) const;
     void write_ascii_int(int value) const;
+
 
 private:
     std::ofstream& ofs_;
