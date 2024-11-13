@@ -1,3 +1,0 @@
-/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/gsl-subbuild/CMakeFiles/gsl-populate.dir
-/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/gsl-subbuild/CMakeFiles/edit_cache.dir
-/home/hugoatm/ARQUITECTURA/PROYECTO2/PROYECTO/build/_deps/gsl-subbuild/CMakeFiles/rebuild_cache.dir

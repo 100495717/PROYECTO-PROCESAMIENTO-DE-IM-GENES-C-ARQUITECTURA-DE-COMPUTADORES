@@ -1,1 +1,0 @@
-/usr/bin/c++ -O3 -DNDEBUG -march=native "CMakeFiles/imtool-aos.dir/main.cpp.o" -o imtool-aos  ../imgaos/libimgaos.a ../common/libcommon.a ../lib/libgtest.a 

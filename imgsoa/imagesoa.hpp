@@ -19,9 +19,9 @@ public:
 
     // Constructor con parámetros
     ImageSoa(int w, int h, int max_val) : width(w), height(h), max_color_value(max_val) {
-        r.resize(w * h);
-        g.resize(w * h);
-        b.resize(w * h);
+        r.resize(static_cast<std::vector<uint16_t>::size_type>(w) * static_cast<std::vector<uint16_t>::size_type>(h));
+        g.resize(static_cast<std::vector<uint16_t>::size_type>(w) * static_cast<std::vector<uint16_t>::size_type>(h));
+        b.resize(static_cast<std::vector<uint16_t>::size_type>(w) * static_cast<std::vector<uint16_t>::size_type>(h));
     }
 
     // Constructor que acepta una ruta de archivo
