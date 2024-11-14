@@ -15,6 +15,7 @@
 void print_image_info(const ImageAos& img){
     std::cout << "Ancho: " << img.width << std::endl;
     std::cout << "Alto: " << img.height << std::endl;
+    std::cout << "Valor máximo de color: " << img.max_color_value << std::endl;
     std::cout << "Píxeles totales: " << img.pixels.size() << std::endl;
 
 }
