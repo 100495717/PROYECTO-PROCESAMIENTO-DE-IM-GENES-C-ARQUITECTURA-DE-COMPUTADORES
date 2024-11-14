@@ -3,9 +3,7 @@
 #include "../imgaos/ppm-aos.hpp"
 #include "../imgaos/image-operations-aos.hpp"
 #include "../common/binaryio.hpp"
-#include <gsl/gsl> // Incluye toda la biblioteca GSL
-#include <gsl/span> // Solo incluye gsl::span
-#include <gsl/assert>
+#include "main.hpp"
 #include <stdexcept>
 #include <vector>
 #include <string>
