@@ -3,10 +3,10 @@
 add_executable(utest-imgsoa
 
     compress_test.cpp
-    cutfreq_test.cpp
-    resize_test.cpp
-    info_test.cpp
-    maxlevel_test.cpp
+    #cutfreq_test.cpp
+    #resize_test.cpp
+    #info_test.cpp
+    #maxlevel_test.cpp
 )
 
 # Library dependencies

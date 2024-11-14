@@ -3,9 +3,9 @@
 resize_deer_small_100() {
     echo "Ejecutando test resize deer-small 100x100: $1"
     local ejecutable="$2../build/imtool-soa/imtool-soa"
-    local input_file="$2../in/deer-small.ppm"
-    local expected_output="$2../ex/resize/deer-small-100.ppm"
-    local output_file="$2../out/deer-small-100-out.ppm"
+    local input_file="$2../img_in/deer-small.ppm"
+    local expected_output="$2../img_ex/resize/deer-small-100.ppm"
+    local output_file="$2../img_out/deer-small-100-out.ppm"
     local operacion="resize"
 
     # Valores de resize a probar
@@ -47,8 +47,8 @@ resize_deer_small_100
 resize_deer_small_1000(){
     echo "Ejecutando test resize deer-small 1000x1000: $1"
     local ejecutable="$2../build/imtool-soa/imtool-soa"
-    local input_file="$2../in/deer-small.ppm"
-    local expected_output="$2../ex/resize/deer-small-1000.ppm"
+    local input_file="$2../img_in/deer-small.ppm"
+    local expected_output="$2../img_ex/resize/deer-small-1000.ppm"
     local output_file="$2../out/deer-small-1000-out.ppm"
     local operacion="resize"
 
@@ -91,8 +91,8 @@ resize_deer_small_1000
 resize_deer_large_100(){
     echo "Ejecutando test resize deer-large 100x100: $1"
     local ejecutable="$2../build/imtool-soa/imtool-soa"
-    local input_file="$2../in/deer-large.ppm"
-    local expected_output="$2../ex/resize/deer-large-100.ppm"
+    local input_file="$2../img_in/deer-large.ppm"
+    local expected_output="$2../img_ex/resize/deer-large-100.ppm"
     local output_file="$2../out/deer-large-100-out.ppm"
     local operacion="resize"
 
@@ -135,8 +135,8 @@ resize_deer_large_100
 resize_deer_large_1000(){
     echo "Ejecutando test resize deer-large 1000x1000: $1"
     local ejecutable="$2../build/imtool-soa/imtool-soa"
-    local input_file="$2../in/deer-large.ppm"
-    local expected_output="$2../ex/resize/deer-large-1000.ppm"
+    local input_file="$2../img_in/deer-large.ppm"
+    local expected_output="$2../img_ex/resize/deer-large-1000.ppm"
     local output_file="$2../out/deer-large-1000-out.ppm"
     local operacion="resize"
 
@@ -180,8 +180,8 @@ resize_deer_large_1000
 resize_lake_small_100(){
     echo "Ejecutando test resize lake-small 100x100: $1"
     local ejecutable="$2../build/imtool-soa/imtool-soa"
-    local input_file="$2../in/lake-small.ppm"
-    local expected_output="$2../ex/resize/lake-small-100.ppm"
+    local input_file="$2../img_in/lake-small.ppm"
+    local expected_output="$2../img_ex/resize/lake-small-100.ppm"
     local output_file="$2../out/lake-small-100-out.ppm"
     local operacion="resize"
 
@@ -224,8 +224,8 @@ resize_lake_small_100
 resize_lake_small_1000(){
     echo "Ejecutando test resize lake-small 1000x1000: $1"
     local ejecutable="$2../build/imtool-soa/imtool-soa"
-    local input_file="$2../in/lake-small.ppm"
-    local expected_output="$2../ex/resize/lake-small-1000.ppm"
+    local input_file="$2../img_in/lake-small.ppm"
+    local expected_output="$2../img_ex/resize/lake-small-1000.ppm"
     local output_file="$2../out/lake-small-1000-out.ppm"
     local operacion="resize"
 
@@ -268,8 +268,8 @@ resize_lake_small_1000
 resize_lake_large_100(){
     echo "Ejecutando test resize lake-large 100x100: $1"
     local ejecutable="$2../build/imtool-soa/imtool-soa"
-    local input_file="$2../in/lake-large.ppm"
-    local expected_output="$2../ex/resize/lake-large-100.ppm"
+    local input_file="$2../img_in/lake-large.ppm"
+    local expected_output="$2../img_ex/resize/lake-large-100.ppm"
     local output_file="$2../out/lake-large-100-out.ppm"
     local operacion="resize"
 
@@ -312,8 +312,8 @@ resize_lake_large_100
 resize_lake_large_1000(){
     echo "Ejecutando test resize lake-large 1000x1000: $1"
     local ejecutable="$2../build/imtool-soa/imtool-soa"
-    local input_file="$2../in/lake-large.ppm"
-    local expected_output="$2../ex/resize/lake-large-1000.ppm"
+    local input_file="$2../img_in/lake-large.ppm"
+    local expected_output="$2../img_ex/resize/lake-large-1000.ppm"
     local output_file="$2../out/lake-large-1000-out.ppm"
     local operacion="resize"
 

@@ -3,9 +3,9 @@
 cut_freq_lakelarge100k() {
     echo "Ejecutando test lakelarge a 100k: $1"
     local ejecutable="$2../build/imtool-soa/imtool-soa"
-    local input="$2../in/lake-large.ppm"
+    local input="$2../img_in/lake-large.ppm"
     local output="$2../out/lake-large-100.ppm"
-    local expected="$2../ex/cutfreq/lake-large-100K.ppm"
+    local expected="$2../img_ex/cutfreq/lake-large-100K.ppm"
     local operation="cutfreq"
     local n=100000
     local comando="$ejecutable $input $output $operation $n"
@@ -80,9 +80,9 @@ cut_freq_lakelarge100k
 cut_freq_lakelarge162k() {
     echo "Ejecutando test lakelarge a 162k: $1"
     local ejecutable="$2../build/imtool-soa/imtool-soa"
-    local input="$2../in/lake-large.ppm"
+    local input="$2../img_in/lake-large.ppm"
     local output="$2../out/lake-large-100.ppm"
-    local expected="$2../ex/cutfreq/lake-large-100K.ppm"
+    local expected="$2../img_ex/cutfreq/lake-large-100K.ppm"
     local operation="cutfreq"
     local n=162000
     local comando="$ejecutable $input $output $operation $n"

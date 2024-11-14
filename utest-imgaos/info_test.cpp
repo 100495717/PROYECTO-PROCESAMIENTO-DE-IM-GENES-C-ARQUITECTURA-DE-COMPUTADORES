@@ -2,12 +2,12 @@
 
 #include <cstdint>
 #include <gtest/gtest.h>
-#include <gsl/gsl> // Incluye toda la biblioteca GSL
-#include <gsl/span> // Solo incluye gsl::span
-#include <gsl/assert>
+#include <gsl/gsl>
 #include <stdexcept>
 #include <vector>
 #include <string>
+#include <sstream>
+#include <iostream>
 
 TEST(info, info_normal) {
     ImageAos img;
@@ -19,17 +19,15 @@ TEST(info, info_normal) {
                                   {1,0,0}, {0,1,0}, {0,0,1}, {1,1,1},
                                   {1,0,0}, {0,1,0}, {0,0,1}, {1,1,1} };
     img.pixels = pixels;
-    print_image_info(img);
+
     std::stringstream buffer;
     std::streambuf* old = std::cout.rdbuf(buffer.rdbuf());
 
     print_image_info(img);
 
     std::cout.rdbuf(old);
-    std::string const expected = "Ancho: 4\nAlto: 4\nPíxeles totales: 16\n";
+    std::string const expected = "Ancho: 4\nAlto: 4\nValor máximo de color: 255\nPíxeles totales: 16\n";
     EXPECT_EQ(buffer.str(), expected);
-
-   
 }
 
 TEST(info, info_empty_image) {
@@ -39,17 +37,14 @@ TEST(info, info_empty_image) {
     img.max_color_value = 255;
     img.pixels = {};
 
-    print_image_info(img);
-
     std::stringstream buffer;
     std::streambuf* old = std::cout.rdbuf(buffer.rdbuf());
 
     print_image_info(img);
 
     std::cout.rdbuf(old);
-    std::string const expected = "Ancho: 0\nAlto: 0\nPíxeles totales: 0\n";
+    std::string const expected = "Ancho: 0\nAlto: 0\nValor máximo de color: 255\nPíxeles totales: 0\n";
     EXPECT_EQ(buffer.str(), expected);
-
 }
 
 TEST(info, info_big_image) {
@@ -60,16 +55,12 @@ TEST(info, info_big_image) {
     std::vector<Pixel> pixels(1000000, {1, 1, 1});
     img.pixels = pixels;
 
-    print_image_info(img);
-
     std::stringstream buffer;
     std::streambuf* old = std::cout.rdbuf(buffer.rdbuf());
 
     print_image_info(img);
 
     std::cout.rdbuf(old);
-    std::string const expected = "Ancho: 1000\nAlto: 1000\nPíxeles totales: 1000000\n";
+    std::string const expected = "Ancho: 1000\nAlto: 1000\nValor máximo de color: 255\nPíxeles totales: 1000000\n";
     EXPECT_EQ(buffer.str(), expected);
-
 }
-

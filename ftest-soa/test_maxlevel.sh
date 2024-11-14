@@ -4,8 +4,8 @@
 maxlevel_deer_small_255(){
     echo "Ejecutando test maxlevel deer-samll 255: $1"
     local ejecutable="$2../build/imtool-soa/imtool-soa"
-    local input_file="$2../in/deer-small.ppm"
-    local expected_output="$2../ex/maxlevel/deer-small-255.ppm"
+    local input_file="$2../img_in/deer-small.ppm"
+    local expected_output="$2../img_ex/maxlevel/deer-small-255.ppm"
     local output_file="$2../out/deer-small-max-255-out.ppm"
     local operacion="maxlevel"
 
@@ -43,8 +43,8 @@ maxlevel_deer_small_255
 maxlevel_deer_small_65535(){
     echo "Ejecutando test maxlevel deer-samll 65536: $1"
     local ejecutable="$2../build/imtool-soa/imtool-soa"
-    local input_file="$2../in/deer-small.ppm"
-    local expected_output="$2../ex/maxlevel/deer-small-65535.ppm"
+    local input_file="$2../img_in/deer-small.ppm"
+    local expected_output="$2../img_ex/maxlevel/deer-small-65535.ppm"
     local output_file="$2../out/deer-small-max-65535-out.ppm"
     local operacion="maxlevel"
 

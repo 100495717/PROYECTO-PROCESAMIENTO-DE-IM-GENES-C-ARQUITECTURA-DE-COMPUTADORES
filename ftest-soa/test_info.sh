@@ -3,7 +3,7 @@
 info_sabatini() {
     echo "Ejecutando test info de sabtatini: $1"
     local ejecutable="$2../build/imtool-soa/imtool-soa"
-    local input_file="$2../in/sabatini.ppm"
+    local input_file="$2../img_in/sabatini.ppm"
     local output_file="$2../out/sabatini_info_out.ppm"
     local operacion="info"
 
