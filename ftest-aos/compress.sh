@@ -2,9 +2,9 @@
 compress_deer-small(){
     echo "Ejecutando test compress deer-small: $1"
     local ejecutable="$2../build/imtool-aos/imtool-aos"
-    local input="$2../img_in/deer-small.ppm"
+    local input="$2../in/deer-small.ppm"
     local output="$2../out/deer-small.cppm"
-    local expected="$2../img_ex/compress/deer-small.cppm"
+    local expected="$2../exp/compress/deer-small.cppm"
     local operation="compress"
 
     local comando="$ejecutable $input $output $operation"
@@ -47,9 +47,9 @@ compress_deer-small(){
 compress_lake-small(){
     echo "Ejecutando test compress lake-small: $1"
     local ejecutable="$2../build/imtool-aos/imtool-aos"
-    local input="$2../img_in/lake-small.ppm"
+    local input="$2../in/lake-small.ppm"
     local output="$2../out/lake-small.cppm"
-    local expected="$2../img_exp/compress/lake-small.cppm"
+    local expected="$2../exp/compress/lake-small.cppm"
     local operation="compress"
 
     local comando="$ejecutable $input $output $operation"

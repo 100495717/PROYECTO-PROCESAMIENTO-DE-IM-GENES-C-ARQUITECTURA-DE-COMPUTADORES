@@ -252,8 +252,54 @@ void resize_image(ImageAos& img, int width, int height){
 
 
 
+std::unordered_set<Pixel> find_least_frequent_colors(const std::unordered_map<Pixel, int>& freq_map, int n) {
+    std::vector<std::pair<Pixel, int>> freq_vec(freq_map.begin(), freq_map.end());
+    std::nth_element(freq_vec.begin(), freq_vec.begin() + n, freq_vec.end(), [](const auto& a, const auto& b) {
+        return a.second < b.second;
+    });
 
-// Función principal cut_freq en formato AOS
+    std::unordered_set<Pixel> least_freq_pixels;
+    for (int i = 0; i < n; ++i) {
+        least_freq_pixels.insert(freq_vec[static_cast<std::vector<std::pair<Pixel, int>>::size_type>(i)].first);
+    }
+    return least_freq_pixels;
+}
+
+std::vector<Pixel> get_remaining_colors(const std::unordered_map<Pixel, int>& freq_map, const std::unordered_set<Pixel>& least_freq_pixels) {
+    std::vector<Pixel> remaining_pixels;
+    for (const auto& [pixel, _] : freq_map) {
+        if (least_freq_pixels.find(pixel) == least_freq_pixels.end()) {
+            remaining_pixels.push_back(pixel);
+        }
+    }
+    return remaining_pixels;
+}
+
+
+std::unordered_map<Pixel, Pixel> build_replacement_map(const std::unordered_set<Pixel>& least_freq_pixels, const std::vector<Pixel>& remaining_pixels) {
+    KDTree tree(remaining_pixels);
+    std::unordered_map<Pixel, Pixel> replacement_map;
+
+    for (const auto& pixel : least_freq_pixels) {
+        replacement_map[pixel] = tree.nearestNeighbor(pixel);
+    }
+    return replacement_map;
+}
+
+
+
+void replace_colors_in_image(ImageAos& img, const std::unordered_map<Pixel, Pixel>& replacement_map) {
+    for (auto& pixel : img.pixels) {
+        if (replacement_map.find(pixel) != replacement_map.end()) {
+            pixel = replacement_map.at(pixel);
+        }
+    }
+}
+
+
+
+
+
 void cut_freq(ImageAos& img, int n) {
     // Paso 1: Determinar la frecuencia de cada color
     std::unordered_map<Pixel, int> freq_map;
@@ -267,55 +313,29 @@ void cut_freq(ImageAos& img, int n) {
     }
 
     // Paso 2: Identificar los n colores menos frecuentes
-    std::vector<std::pair<Pixel, int>> freq_vec(freq_map.begin(), freq_map.end());
-    std::nth_element(freq_vec.begin(), freq_vec.begin() + n, freq_vec.end(), [](const auto& a, const auto& b) {
-        return a.second < b.second;
-    });
+   auto least_freq_pixels = find_least_frequent_colors(freq_map, n);
 
     // Crear un conjunto con los colores menos frecuentes
-    std::unordered_set<Pixel> least_freq_pixels;
-    for (int i = 0; i < n; ++i) {
-        least_freq_pixels.insert(freq_vec[static_cast<std::vector<std::pair<Pixel, int>>::size_type>(i)].first);
-    }
-
-    // Paso 3: Reemplazar los colores menos frecuentes por el color más cercano restante
-    std::vector<Pixel> remaining_pixels;
-    for (const auto& [pixel, _] : freq_map) {
-        if (least_freq_pixels.find(pixel) == least_freq_pixels.end()) {
-            remaining_pixels.push_back(pixel);
-        }
-    }
-
+    auto remaining_pixels = get_remaining_colors(freq_map, least_freq_pixels);
+    
     if (remaining_pixels.empty()) {
         std::cerr << "No hay colores restantes para construir el KDTree. Abortando operación." << std::endl;
         return;
     }
+     // Paso 4: Construir el mapa de reemplazo
+    auto replacement_map = build_replacement_map(least_freq_pixels, remaining_pixels);
 
-    KDTree tree(remaining_pixels);
-    std::unordered_map<Pixel, Pixel> replacement_map;
-
-    for (const auto& pixel : least_freq_pixels) {
-        replacement_map[pixel] = tree.nearestNeighbor(pixel);
-    }
-
-    // Reemplazar los colores menos frecuentes en la imagen
-    for (auto& pixel : img.pixels) {
-        if (replacement_map.find(pixel) != replacement_map.end()) {
-            pixel = replacement_map[pixel];
-        }
-    }
+    replace_colors_in_image(img, replacement_map);
 }
 
-void compress_image(const ImageAos& img, const std::string& output) {
-    std::vector<uint8_t> buffer;
 
+void write_header(const ImageAos& img, std::vector<uint8_t>& buffer) {
     // Escribir el encabezado (por ejemplo, "C6 ancho alto max_color_value")
     std::string header = "C6 " + std::to_string(img.width) + " " + std::to_string(img.height) + " " + std::to_string(img.max_color_value) + " ";
     buffer.insert(buffer.end(), header.begin(), header.end());
+}
 
-    // Crear un mapa de frecuencia de colores y una lista de colores únicos
-    std::map<Pixel, int> freq_map;
-    std::vector<Pixel> color_list;
+void create_color_map(const ImageAos& img, std::map<Pixel, int>& freq_map, std::vector<Pixel>& color_list) {
     int color_index = 0;
     for (const auto& pixel : img.pixels) {
         if (freq_map.find(pixel) == freq_map.end()) {
@@ -323,12 +343,10 @@ void compress_image(const ImageAos& img, const std::string& output) {
             color_list.push_back(pixel);
         }
     }
+}
 
-    // Escribir el número de colores únicos
-    std::string color_count = std::to_string(color_list.size()) + "\n";
-    buffer.insert(buffer.end(), color_count.begin(), color_count.end());
 
-    // Escribir la tabla de colores
+void write_color_table(std::vector<uint8_t>& buffer, const ImageAos& img, const std::vector<Pixel>& color_list) {
     for (const auto& pixel : color_list) {
         if (img.max_color_value <= 255) {
             buffer.push_back(static_cast<uint8_t>(pixel.r));
@@ -343,6 +361,31 @@ void compress_image(const ImageAos& img, const std::string& output) {
             buffer.push_back(static_cast<uint8_t>(pixel.b & 0xFF));
         }
     }
+}
+
+
+
+
+
+
+
+void compress_image(const ImageAos& img, const std::string& output) {
+    std::vector<uint8_t> buffer;
+
+    // Escribo encabezado
+    write_header(img, buffer);
+
+    // Crear un mapa de frecuencia de colores y una lista de colores únicos
+    std::map<Pixel, int> freq_map;
+    std::vector<Pixel> color_list;
+    create_color_map(img, freq_map, color_list);
+
+    // Escribir el número de colores únicos
+    std::string color_count = std::to_string(color_list.size()) + "\n";
+    buffer.insert(buffer.end(), color_count.begin(), color_count.end());
+
+    // Escribir la tabla de colores
+    write_color_table(buffer, img, color_list);
 
     // Escribir los índices de los colores
     int index_size = (color_list.size() < 256) ? 1 : (color_list.size() < 65536) ? 2 : 4;

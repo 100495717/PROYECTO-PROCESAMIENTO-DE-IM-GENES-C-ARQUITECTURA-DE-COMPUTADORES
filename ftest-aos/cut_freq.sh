@@ -70,6 +70,11 @@ cut_freq_lakelarge100k(){
     else
         echo "El número total de píxeles es correcto"
     fi
+    read_ppm_frequencies() {
+    local file=$1
+    tail -n +4 "$file" | tr -d '\0' | sort | uniq -c | sort -nr
+}
+
 }
 
 cut_freq_lakelarge162k(){
