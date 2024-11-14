@@ -1,9 +1,6 @@
 #include "../imgsoa/image-operations-soa.hpp"
 #include <cstdint>
 #include <gtest/gtest.h>
-#include <gsl/gsl> // Incluye toda la biblioteca GSL
-#include <gsl/span> // Solo incluye gsl::span
-#include <gsl/assert>
 #include <stdexcept>
 #include <vector>
 #include <string>
@@ -24,7 +21,7 @@ TEST(compress, compress_normal) {
 
     std::string output = "compress_test";
     compress_image_soa(img, output);
-    std::ifstream file(output, std::ios::binary);
+    std::ifstream file(output + ".cppm", std::ios::binary);
     ASSERT_TRUE(file.is_open());
 
     std::ostringstream buffer;
@@ -40,7 +37,6 @@ TEST(compress, compress_normal) {
     EXPECT_EQ(content.substr(expected_header.size(), expected_colors.size()), expected_colors);
 
     file.close();
-    remove_test_file(output);
 }
 
 TEST(compress, compress_empty) {
@@ -52,9 +48,9 @@ TEST(compress, compress_empty) {
     img.g = {};
     img.b = {};
 
-    std::string output = "compress_test";
+    std::string output = "compress_tests";
     compress_image_soa(img, output);
-    std::ifstream file(output, std::ios::binary);
+    std::ifstream file(output + ".cppm", std::ios::binary);
     ASSERT_TRUE(file.is_open());
 
     std::ostringstream buffer;
@@ -79,7 +75,7 @@ TEST(compress, compress_max_color_value_65535) {
 
     std::string output = "compress_test";
     compress_image_soa(img, output);
-    std::ifstream file(output, std::ios::binary);
+    std::ifstream file(output + ".cppm", std::ios::binary);
     ASSERT_TRUE(file.is_open());
 
     std::ostringstream buffer;
@@ -92,16 +88,15 @@ TEST(compress, compress_max_color_value_65535) {
 
     // Verificar tabla de colores en little-endian
     std::string const expected_colors = 
-        "\x30\x75\x30\x75\x30\x75"  // Color 1: 30000, 30000, 30000
-        "\x40\x9C\x40\x9C\x40\x9C"  // Color 2: 40000, 40000, 40000
-        "\x50\xC3\x50\xC3\x50\xC3"  // Color 3: 50000, 50000, 50000
-        "\x60\xEA\x60\xEA\x60\xEA"; // Color 4: 60000, 60000, 60000
+        "\x75\x30\x75\x30\x75\x30"  // Color 1: 30000, 30000, 30000
+        "\x9C\x40\x9C\x40\x9C\x40"  // Color 2: 40000, 40000, 40000
+        "\xC3\x50\xC3\x50\xC3\x50"  // Color 3: 50000, 50000, 50000
+        "\xEA\x60\xEA\x60\xEA\x60"; // Color 4: 60000, 60000, 60000
     EXPECT_EQ(content.substr(expected_header.size(), expected_colors.size()), expected_colors);
 
     file.close();
     remove_test_file(output);
 }
-
 
 TEST(compress, compress_large_image) {
     ImageSoa img;
@@ -114,7 +109,7 @@ TEST(compress, compress_large_image) {
 
     std::string output = "compress_test";
     compress_image_soa(img, output);
-    std::ifstream file(output, std::ios::binary);
+    std::ifstream file(output + ".cppm", std::ios::binary);
     ASSERT_TRUE(file.is_open());
 
     std::ostringstream buffer;

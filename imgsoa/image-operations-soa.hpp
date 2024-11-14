@@ -1,7 +1,6 @@
 #ifndef IMAGE_OPERATIONS_HPP
 #define IMAGE_OPERATIONS_HPP
 
-#include "ppm-soa.hpp"
 #include <array>
 #include <vector>
 #include <iostream>
@@ -10,6 +9,28 @@
 #include <tuple>
 #include <limits>
 
+class ImageSoa {
+public:
+    int width;
+    int height;
+    int max_color_value;
+    std::vector<uint16_t> r; // Vector para los componentes rojos
+    std::vector<uint16_t> g; // Vector para los componentes verdes
+    std::vector<uint16_t> b; // Vector para los componentes azules
+
+    // Constructor por defecto
+    ImageSoa() : width(0), height(0), max_color_value(255) {}
+
+    // Constructor con parámetros
+    ImageSoa(int w, int h, int max_val) : width(w), height(h), max_color_value(max_val) {
+        r.resize(static_cast<std::vector<uint16_t>::size_type>(w) * static_cast<std::vector<uint16_t>::size_type>(h));
+        g.resize(static_cast<std::vector<uint16_t>::size_type>(w) * static_cast<std::vector<uint16_t>::size_type>(h));
+        b.resize(static_cast<std::vector<uint16_t>::size_type>(w) * static_cast<std::vector<uint16_t>::size_type>(h));
+    }
+
+    // Constructor que acepta una ruta de archivo
+    explicit ImageSoa(const std::string& filename);
+};
 // Definir un array para representar el color
 using Color = std::array<uint16_t, 3>;
 
@@ -114,6 +135,9 @@ private:
     }
 };
 
+
+void load_image_from_file_soa(const std::string& filename, ImageSoa& img);
+void write_image_to_file_soa(const std::string& filename, const ImageSoa& img);
 void print_image_info_soa(const ImageSoa& img);
 void max_level(ImageSoa& img, int maxlevel);
 void resize_image_soa(ImageSoa& img, int width, int height);

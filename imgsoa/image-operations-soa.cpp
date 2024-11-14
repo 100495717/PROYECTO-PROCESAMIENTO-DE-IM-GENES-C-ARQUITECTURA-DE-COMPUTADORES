@@ -12,7 +12,139 @@
 #include <execution>
 #include <cmath>
 #include <fstream>
+#include <sstream>
 
+void load_image_from_file_soa(const std::string& filePath, ImageSoa& img) {
+    // Leer el archivo binario completo en un buffer de bytes
+    std::vector<uint8_t> buffer = BinaryIO::readBinaryFile(filePath);
+
+    size_t offset = 0;
+
+    // Leer el número mágico y verificar que sea "P6"
+    std::string magic_number(buffer.begin(), buffer.begin() + 2);
+    if (magic_number != "P6") {
+        throw std::runtime_error("Formato de archivo incorrecto: no es un archivo PPM P6");
+    }
+    offset += 2;
+
+    // Saltar espacios en blanco después del número mágico
+    while (isspace(buffer[offset])) {
+        ++offset;
+    }
+
+    // Leer la anchura de la imagen
+    std::stringstream width_stream;
+    while (isdigit(buffer[offset])) {
+        width_stream << buffer[offset++];
+    }
+    img.width = std::stoi(width_stream.str());
+
+    // Saltar espacios en blanco después de la anchura
+    while (isspace(buffer[offset])) {
+        ++offset;
+    }
+
+    // Leer la altura de la imagen
+    std::stringstream height_stream;
+    while (isdigit(buffer[offset])) {
+        height_stream << buffer[offset++];
+    }
+    img.height = std::stoi(height_stream.str());
+
+    // Saltar espacios en blanco después de la altura
+    while (isspace(buffer[offset])) {
+        ++offset;
+    }
+
+    // Leer el valor máximo de color
+    std::stringstream max_color_value_stream;
+    while (isdigit(buffer[offset])) {
+        max_color_value_stream << buffer[offset++];
+    }
+    img.max_color_value = std::stoi(max_color_value_stream.str());
+
+    // Verificar que el valor máximo de color sea válido
+    if (img.max_color_value <= 0 || img.max_color_value >= 65536) {
+        throw std::runtime_error("Valor máximo de color no válido en el archivo PPM");
+    }
+
+    // Saltar el único carácter en blanco después del valor máximo de color
+    if (!isspace(buffer[offset])) {
+        throw std::runtime_error("Formato de archivo incorrecto: falta el carácter en blanco después del valor máximo de color");
+    }
+    ++offset;
+
+    // Calcular el tamaño de cada píxel en bytes (3 bytes si max_color_value <= 255, o 6 bytes si es mayor)
+    int pixel_size = (img.max_color_value <= 255) ? 3 : 6;
+    img.r.resize(static_cast<size_t>(img.width) * static_cast<size_t>(img.height));
+    img.g.resize(static_cast<size_t>(img.width) * static_cast<size_t>(img.height));
+    img.b.resize(static_cast<size_t>(img.width) * static_cast<size_t>(img.height));
+
+    // Leer los píxeles de la imagen
+    for (size_t i = 0; i < img.r.size(); ++i) {
+        if (pixel_size == 3) {
+            // Leer 1 byte por componente (RGB)
+            img.r[i] = buffer[offset++];
+            img.g[i] = buffer[offset++];
+            img.b[i] = buffer[offset++];
+        } else {
+            // Leer 2 bytes por componente (RGB), en formato little-endian
+            img.r[i] = buffer[offset] | (buffer[offset + 1] << 8);
+            offset += 2;
+            img.g[i] = buffer[offset] | (buffer[offset + 1] << 8);
+            offset += 2;
+            img.b[i] = buffer[offset] | (buffer[offset + 1] << 8);
+            offset += 2;
+        }
+    }
+}
+
+void write_image_to_file_soa(const std::string& filePath, const ImageSoa& img) {
+    // Crear un buffer para almacenar todos los datos del archivo
+    std::vector<uint8_t> buffer;
+
+    // Escribir el número mágico "P6" al inicio
+    buffer.push_back('P');
+    buffer.push_back('6');
+    buffer.push_back('\n');
+
+    // Escribir la anchura y altura como texto, seguidos de un salto de línea
+    std::string width_str = std::to_string(img.width);
+    buffer.insert(buffer.end(), width_str.begin(), width_str.end());
+    buffer.push_back(' ');
+
+    std::string height_str = std::to_string(img.height);
+    buffer.insert(buffer.end(), height_str.begin(), height_str.end());
+    buffer.push_back('\n');
+
+    // Escribir el valor máximo de color, seguido de un salto de línea
+    std::string max_color_str = std::to_string(img.max_color_value);
+    buffer.insert(buffer.end(), max_color_str.begin(), max_color_str.end());
+    buffer.push_back('\n');
+
+    // Escribir los datos de los píxeles en formato RGB
+    if (img.max_color_value <= 255) {
+        // Si el valor máximo de color es <= 255, cada componente se guarda en 1 byte
+        for (size_t i = 0; i < img.r.size(); ++i) {
+            buffer.push_back(static_cast<uint8_t>(img.r[i]));
+            buffer.push_back(static_cast<uint8_t>(img.g[i]));
+            buffer.push_back(static_cast<uint8_t>(img.b[i]));
+        }
+    } else {
+        // Si el valor máximo de color es > 255, cada componente se guarda en 2 bytes (little-endian)
+        for (size_t i = 0; i < img.r.size(); ++i) {
+            buffer.push_back(static_cast<uint8_t>(img.r[i] & 0xFF));
+            buffer.push_back(static_cast<uint8_t>((img.r[i] >> 8) & 0xFF));
+            buffer.push_back(static_cast<uint8_t>(img.g[i] & 0xFF));
+            buffer.push_back(static_cast<uint8_t>((img.g[i] >> 8) & 0xFF));
+            buffer.push_back(static_cast<uint8_t>(img.b[i] & 0xFF));
+            buffer.push_back(static_cast<uint8_t>((img.b[i] >> 8) & 0xFF));
+        }
+    }
+
+    // Escribir el buffer al archivo usando BinaryIO
+    BinaryIO::writeBinaryFile(filePath, buffer);
+}
 
 //FUNCION INFO
 void print_image_info_soa(const ImageSoa& img) {
@@ -165,48 +297,65 @@ void cutfreq(ImageSoa& imagen, int n) {
 
 //COMPRESS
 void compress_image_soa(const ImageSoa& img, const std::string& output) {
-    std::ofstream file(output, std::ios::binary);
-    if (!file) throw std::runtime_error("Error: No se pudo abrir el archivo " + output);
-    
-    BinaryWriter writer(file);
-    writer.write_string("C6 ");
-    writer.write_ascii_int(img.width); writer.write_string(" ");
-    writer.write_ascii_int(img.height); writer.write_string(" ");
-    writer.write_ascii_int(img.max_color_value); writer.write_string(" ");
-    
-    std::map<std::tuple<unsigned short, unsigned short, unsigned short>, int> color_map;
-    std::vector<std::tuple<unsigned short, unsigned short, unsigned short>> color_list;
+    std::vector<uint8_t> buffer;
+
+    // Escribir el encabezado (por ejemplo, "C6 ancho alto max_color_value")
+    std::string header = "C6 " + std::to_string(img.width) + " " + std::to_string(img.height) + " " + std::to_string(img.max_color_value) + " ";
+    buffer.insert(buffer.end(), header.begin(), header.end());
+
+    // Crear un mapa de frecuencia de colores y una lista de colores únicos
+    std::map<std::tuple<uint16_t, uint16_t, uint16_t>, int> color_map;
+    std::vector<std::tuple<uint16_t, uint16_t, uint16_t>> color_list;
     int color_index = 0;
-    for (std::vector<unsigned short>::size_type i = 0; i < static_cast<std::vector<unsigned short>::size_type>(img.width * img.height); ++i) {
+    for (size_t i = 0; i < img.r.size(); ++i) {
         auto color = std::make_tuple(img.r[i], img.g[i], img.b[i]);
         if (color_map.find(color) == color_map.end()) {
             color_map[color] = color_index++;
             color_list.push_back(color);
         }
     }
-    writer.write_ascii_int(static_cast<int>(color_list.size())); writer.write_string("\n");
 
+    // Escribir el número de colores únicos
+    std::string color_count = std::to_string(color_list.size()) + "\n";
+    buffer.insert(buffer.end(), color_count.begin(), color_count.end());
+
+    // Escribir la tabla de colores
     for (const auto& color : color_list) {
-        unsigned short r, g, b;
+        uint16_t r, g, b;
         std::tie(r, g, b) = color;
         if (img.max_color_value <= 255) {
-            writer.write_uint8(static_cast<uint8_t>(r));
-            writer.write_uint8(static_cast<uint8_t>(g));
-            writer.write_uint8(static_cast<uint8_t>(b));
+            buffer.push_back(static_cast<uint8_t>(r));
+            buffer.push_back(static_cast<uint8_t>(g));
+            buffer.push_back(static_cast<uint8_t>(b));
         } else {
-            writer.write_uint16(r); writer.write_uint16(g); writer.write_uint16(b);
+            buffer.push_back(static_cast<uint8_t>(r >> 8));
+            buffer.push_back(static_cast<uint8_t>(r & 0xFF));
+            buffer.push_back(static_cast<uint8_t>(g >> 8));
+            buffer.push_back(static_cast<uint8_t>(g & 0xFF));
+            buffer.push_back(static_cast<uint8_t>(b >> 8));
+            buffer.push_back(static_cast<uint8_t>(b & 0xFF));
         }
     }
-    int tamaño_indice = (color_list.size() <= 256) ? 1 : 
-                        (color_list.size() <= 65536) ? 2 : 
-                        (color_list.size() <= 4294967296) ? 4 : 
-                        throw std::runtime_error("Tabla de colores > 2^32 no soportada");
-    for (std::vector<unsigned short>::size_type i = 0; i < static_cast<std::vector<unsigned short>::size_type>(img.width * img.height); ++i) {
-        int indice_color = color_map[std::make_tuple(img.r[i], img.g[i], img.b[i])];
-        if (tamaño_indice == 1) writer.write_uint8(static_cast<uint8_t>(indice_color));
-        else if (tamaño_indice == 2) writer.write_uint16(static_cast<uint16_t>(indice_color));
-        else if (tamaño_indice == 4) writer.write_uint32(static_cast<uint32_t>(indice_color));
+
+    // Determinar el tamaño del índice
+    int index_size = (color_list.size() <= 256) ? 1 : 
+                     (color_list.size() <= 65536) ? 2 : 
+                     (color_list.size() <= 4294967296) ? 4 : 
+                     throw std::runtime_error("Tabla de colores > 2^32 no soportada");
+
+    // Escribir los índices de los colores
+    for (size_t i = 0; i < img.r.size(); ++i) {
+        int index = color_map[std::make_tuple(img.r[i], img.g[i], img.b[i])];
+        for (int j = 0; j < index_size; ++j) {
+            buffer.push_back(static_cast<uint8_t>((index >> (j * 8)) & 0xFF));
+        }
     }
-    if (!file) throw std::runtime_error("Error: Fallo al escribir en el fichero de salida.");
-    file.close();
+
+    // Escribir el buffer al archivo usando BinaryIO
+    try {
+        BinaryIO::writeBinaryFile(output + ".cppm", buffer);
+    } catch (const std::exception& e) {
+        std::cerr << "Error al escribir el archivo: " << e.what() << std::endl;
+        throw;
+    }
 }

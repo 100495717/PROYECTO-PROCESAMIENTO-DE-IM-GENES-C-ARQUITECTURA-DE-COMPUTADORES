@@ -30,9 +30,13 @@ TEST(compress, compress_normal){
     std::ostringstream buffer;
     buffer << file.rdbuf();
     std::string content = buffer.str();
-    std::cout << content << std::endl;
-    std::string const expected = "C6 4 4 255 4\n";
-    EXPECT_EQ(content.substr(0, expected.size()), expected);    
+    std::string const expected_header = "C6 4 4 255 4\n";
+    EXPECT_EQ(content.substr(0, expected_header.size()), expected_header);   
+
+    // Verificar la tabla de colores para (1,0,0), (0,1,0), (0,0,1), (1,1,1)
+    std::string const expected_colors = "\x01\x00\x00\x00\x01\x00\x00\x00\x01\x01\x01";
+    EXPECT_EQ(content.substr(expected_header.size(), expected_colors.size()), expected_colors);
+    file.close();
 }
 
 TEST(compress, compress_empty){
@@ -50,7 +54,6 @@ TEST(compress, compress_empty){
     std::ostringstream buffer;
     buffer << file.rdbuf();
     std::string content = buffer.str();
-    std::cout << content << std::endl;
 
     std::string const expected = "C6 0 0 255 0\n";
     EXPECT_EQ(content.substr(0, expected.size()), expected);
@@ -73,8 +76,13 @@ TEST(compress, compress_big){
     std::ostringstream buffer;
     buffer << file.rdbuf();
     std::string content = buffer.str();
-    std::cout << content << std::endl;
 
-    std::string const expected = "C6 1000 1000 255 1\n";
-    EXPECT_EQ(content.substr(0, expected.size()), expected);
+    std::string const expected_header = "C6 1000 1000 255 1\n";
+    EXPECT_EQ(content.substr(0, expected_header.size()), expected_header);
+
+    // Verificar la tabla de colores para (1,1,1)
+    std::string const expected_colors = "\x01\x01\x01";
+    EXPECT_EQ(content.substr(expected_header.size(), expected_colors.size()), expected_colors);
+
+    file.close();
 }
