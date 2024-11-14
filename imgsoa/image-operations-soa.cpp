@@ -28,12 +28,6 @@ void max_level(ImageSoa& img, int maxlevel) {
         throw std::invalid_argument("El nivel máximo debe ser mayor a cero y menor o igual a 65535.");
     }
 
-    //Si el nuevo max level coincide con el de la imagen, devolvemos la imagen tal cual
-    if (img.max_color_value == maxlevel) {
-        std::cout << "El valor máximo ya coincide con el valor deseado. No se necesita escalado." << std::endl;
-        return;
-    }
-
     // Calculamos el factor de escalado
     double scale = static_cast<double>(maxlevel) / img.max_color_value;
     std::cout << "Factor de escala calculado: " << scale << std::endl;
@@ -193,7 +187,6 @@ struct KDTree {
                          });
         auto median = static_cast<std::vector<Color>::size_type>(sortedColors.size() / 2);
         Node* node = new Node{sortedColors[median], nullptr, nullptr};
-        std::cout << "Nodo creado en profundidad " << depth << " con color " << node->color[0] << "," << node->color[1] << "," << node->color[2] << std::endl;
         node->left = build(std::vector<Color>(sortedColors.begin(), sortedColors.begin() + static_cast<std::vector<Color>::difference_type>(median)), depth + 1);
         node->right = build(std::vector<Color>(sortedColors.begin() + static_cast<std::vector<Color>::difference_type>(median) + 1, sortedColors.end()), depth + 1);
         return node;
@@ -302,13 +295,6 @@ void cutfreq(ImageSoa& imagen, int n) {
     KDTree tree(coloresRestantes);
     std::unordered_map<Color, Color, HashColor> mapaReemplazo;
 
-    // Buscamos el color más cercano al color que vamos a eliminar
-    for (const auto& color : coloresMenosFrecuentes) {
-        mapaReemplazo[color] = tree.nearestNeighbor(color);
-        std::cout << "Color " << color[0] << "," << color[1] << "," << color[2] << " reemplazado por "
-                  << mapaReemplazo[color][0] << "," << mapaReemplazo[color][1] << "," << mapaReemplazo[color][2] << std::endl;
-    }
-
     // Recorremos todos los pixeles de la imagen para sustituir aquellos que hagan falta
     for (size_t i = 0; i < imagen.r.size(); ++i) {
         Color color = {static_cast<unsigned short>(imagen.r[i]),
@@ -329,7 +315,7 @@ void cutfreq(ImageSoa& imagen, int n) {
 
 //COMPRESS
 void compress_image_soa(const ImageSoa& img, const std::string& output) {
-    std::ofstream file(output, std::ios::binary);
+    std::ofstream file(output + ".cppm", std::ios::binary);
 
     if (!file) {
         throw std::runtime_error("Error: No se pudo abrir el archivo " + output);
