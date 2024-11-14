@@ -109,6 +109,14 @@ void resize_image_soa(ImageSoa& img, int new_width, int new_height) {
     img.b = std::move(new_b);
 }
 
+// Función para calcular la distancia euclidiana al cuadrado entre dos colores
+inline int distanciaColorCuadrada(const Color& color1, const Color& color2) {
+    int difRojo = color1[0] - color2[0];
+    int difVerde = color1[1] - color2[1];
+    int difAzul = color1[2] - color2[2];
+    return difRojo * difRojo + difVerde * difVerde + difAzul * difAzul;
+}
+
 void cutfreq(ImageSoa& imagen, int n) {
     std::unordered_map<Color, int, HashColor> frecuenciaColor;
     for (size_t i = 0; i < imagen.r.size(); ++i) {
