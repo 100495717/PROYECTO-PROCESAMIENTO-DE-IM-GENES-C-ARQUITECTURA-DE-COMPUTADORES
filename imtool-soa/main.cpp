@@ -1,7 +1,7 @@
 #include <iostream>
 #include "../common/progargs.hpp"
-#include "../imgaos/ppm-aos.hpp"
-#include "../imgaos/image-operations-aos.hpp"
+#include "../imgsoa/ppm-soa.hpp"
+#include "../imgsoa/image-operations-soa.hpp"
 #include "../common/binaryio.hpp"
 #include "main.hpp"
 #include <stdexcept>
@@ -17,17 +17,17 @@ int main(int argc, char* argv[]){
         std:: string operation = args[3];
 
         // Leer la imagen
-        ImageAos img = read_ppm_image_aos(input);
+        ImageSoa img = read_ppm_image_soa(input);
 
         // Hacer la operación
         if (operation == "compress"){
         
-            compress_image(img, output);
+            compress_image_soa(img, output);
         } 
         else{
             // Si la operación es "info" imprimimos la información de la imagen
             if (operation == "info"){
-                print_image_info(img);
+                print_image_info_soa(img);
             } 
 
             // Si la operación es "maxlevel" aplicamos el nivel máximo
@@ -40,16 +40,16 @@ int main(int argc, char* argv[]){
             else if (operation == "resize") {
                 int width = std::stoi(args[4]);
                 int height = std::stoi(args[5]);
-                resize_image(img, width, height);
+                resize_image_soa(img, width, height);
             }
 
             // Si la operación es "cutfreq" cortamos la frecuencia 
             else if (operation == "cutfreq"){
                 int n = std::stoi(args[4]);
-                cut_freq(img, n);
+                cutfreq(img, n);
             } 
             else if (operation == "write"){
-                write_ppm_image_aos(output, img);
+                write_ppm_image_soa(output, img);
             }
             else{
                 throw std::runtime_error("Operación no válida");
@@ -57,7 +57,7 @@ int main(int argc, char* argv[]){
         
 
             // Escribimos la imagen modificada en la salida
-            write_ppm_image_aos(output, img);
+            write_ppm_image_soa(output, img);
         }
     }
     
