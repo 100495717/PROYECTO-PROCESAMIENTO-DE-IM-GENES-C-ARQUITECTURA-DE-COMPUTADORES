@@ -1,44 +1,20 @@
+//Tanto en este documento como en el binaryio.cpp se van a implementar funciones para leer y escribir archivos en formato binario.
+//Al trabajar con imágenes en formato PPM, las operaciones de lectura y escritura binaria van a ser fundamentales, para poder procesar eficientemente los archivos.
+
 #ifndef BINARYIO_HPP
 #define BINARYIO_HPP
 
-#include <vector>
 #include <string>
+#include <vector>
 #include <cstdint>
 
-class BinaryReader {
+class BinaryIO {
 public:
-    explicit BinaryReader(const std::vector<uint8_t>& buffer);
+    // Función que abre un archivo binario, lo lee y devuelve su contenido como vector de bytes.
+    static std::vector<uint8_t> readBinaryFile(const std::string& filePath);
 
-    // Lee un byte sin signo
-    uint8_t read_uint8();
-    // Lee dos bytes sin signo en formato big-endian
-    uint16_t read_uint16();
-    // Lee un string hasta el próximo espacio o salto de línea
-    std::string read_string();
-    // Leer un int de ascii
-    int read_ascii_int();
-    // Salta espacios en blanco y saltos de línea
-    void skip();
-
-    [[nodiscard]] bool eof() const;
-private:
-    const std::vector<uint8_t>& buffer_;
-    size_t position_;
-};
-
-class BinaryWriter {
-public:
-    explicit BinaryWriter(std::ofstream& output_stream);
-
-    void write_uint8(uint8_t value) const;
-    void write_uint16(uint16_t value) const;
-    void write_uint32(uint32_t value) const;
-    void write_string(const std::string& value) const;
-    void write_ascii_int(int value) const;
-
-
-private:
-    std::ofstream& ofs_;
+    // Escribe un vector de bytes en un archivo binario.
+    static void writeBinaryFile(const std::string& filePath, const std::vector<uint8_t>& data);
 };
 
 #endif // BINARYIO_HPP

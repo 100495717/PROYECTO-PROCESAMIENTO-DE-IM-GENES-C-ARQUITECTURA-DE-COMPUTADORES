@@ -1,4 +1,4 @@
-#ifndef PIXEL_HPP
+/*#ifndef PIXEL_HPP
 #define PIXEL_HPP
 
 #include <cstdint>
@@ -30,4 +30,4 @@ struct std::hash<Pixel> {
     }
 };
 
-#endif 
+#endif */

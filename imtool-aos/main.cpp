@@ -15,9 +15,10 @@ int main(int argc, char* argv[]){
         std:: string input = args[1];
         std:: string output = args[2];
         std:: string operation = args[3];
-
+        //Creo ImageAos vacía
+        ImageAos img;
         // Leer la imagen
-        ImageAos img = read_ppm_image_aos(input);
+        load_image_from_file(input, img);
 
         // Hacer la operación
         if (operation == "compress"){
@@ -49,7 +50,7 @@ int main(int argc, char* argv[]){
                 cut_freq(img, n);
             } 
             else if (operation == "write"){
-                write_ppm_image_aos(output, img);
+                write_image_to_file(output, img);
             }
             else{
                 throw std::runtime_error("Operación no válida");
@@ -57,7 +58,7 @@ int main(int argc, char* argv[]){
         
 
             // Escribimos la imagen modificada en la salida
-            write_ppm_image_aos(output, img);
+            write_image_to_file(output, img);
         }
     }
     

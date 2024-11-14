@@ -11,6 +11,145 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
+#include <stdexcept>
+#include <string>
+#include <cstdint>
+#include <sstream>
+
+
+
+
+void load_image_from_file(const std::string& filePath, ImageAos& img) {
+    // Leer el archivo binario completo en un buffer de bytes
+    std::vector<uint8_t> buffer = BinaryIO::readBinaryFile(filePath);
+
+    size_t offset = 0;
+
+    // Leer el número mágico y verificar que sea "P6"
+    std::string magic_number(buffer.begin(), buffer.begin() + 2);
+    if (magic_number != "P6") {
+        throw std::runtime_error("Formato de archivo incorrecto: no es un archivo PPM P6");
+    }
+    offset += 2;
+
+    // Saltar espacios en blanco después del número mágico
+    while (isspace(buffer[offset])) {
+        ++offset;
+    }
+
+    // Leer la anchura de la imagen
+    std::stringstream width_stream;
+    while (isdigit(buffer[offset])) {
+        width_stream << buffer[offset++];
+    }
+    img.width = std::stoi(width_stream.str());
+
+    // Saltar espacios en blanco después de la anchura
+    while (isspace(buffer[offset])) {
+        ++offset;
+    }
+
+    // Leer la altura de la imagen
+    std::stringstream height_stream;
+    while (isdigit(buffer[offset])) {
+        height_stream << buffer[offset++];
+    }
+    img.height = std::stoi(height_stream.str());
+
+    // Saltar espacios en blanco después de la altura
+    while (isspace(buffer[offset])) {
+        ++offset;
+    }
+
+    // Leer el valor máximo de color
+    std::stringstream max_color_value_stream;
+    while (isdigit(buffer[offset])) {
+        max_color_value_stream << buffer[offset++];
+    }
+    img.max_color_value = std::stoi(max_color_value_stream.str());
+
+    // Verificar que el valor máximo de color sea válido
+    if (img.max_color_value <= 0 || img.max_color_value >= 65536) {
+        throw std::runtime_error("Valor máximo de color no válido en el archivo PPM");
+    }
+
+    // Saltar el único carácter en blanco después del valor máximo de color
+    if (!isspace(buffer[offset])) {
+        throw std::runtime_error("Formato de archivo incorrecto: falta el carácter en blanco después del valor máximo de color");
+    }
+    ++offset;
+
+    // Calcular el tamaño de cada píxel en bytes (3 bytes si max_color_value <= 255, o 6 bytes si es mayor)
+    int pixel_size = (img.max_color_value <= 255) ? 3 : 6;
+    img.pixels.resize(static_cast<size_t>(img.width) * static_cast<size_t>(img.height));
+
+    // Leer los píxeles de la imagen
+    for (size_t i = 0; i < img.pixels.size(); ++i) {
+        if (pixel_size == 3) {
+            // Leer 1 byte por componente (RGB)
+            img.pixels[i].r = buffer[offset++];
+            img.pixels[i].g = buffer[offset++];
+            img.pixels[i].b = buffer[offset++];
+        } else {
+            // Leer 2 bytes por componente (RGB), en formato little-endian
+            img.pixels[i].r = buffer[offset] | (buffer[offset + 1] << 8);
+            offset += 2;
+            img.pixels[i].g = buffer[offset] | (buffer[offset + 1] << 8);
+            offset += 2;
+            img.pixels[i].b = buffer[offset] | (buffer[offset + 1] << 8);
+            offset += 2;
+        }
+    }
+}
+
+
+void write_image_to_file(const std::string& filePath, const ImageAos& img) {
+    // Crear un buffer para almacenar todos los datos del archivo
+    std::vector<uint8_t> buffer;
+
+    // Escribir el número mágico "P6" al inicio
+    buffer.push_back('P');
+    buffer.push_back('6');
+    buffer.push_back('\n');
+
+    // Escribir la anchura y altura como texto, seguidos de un salto de línea
+    std::string width_str = std::to_string(img.width);
+    buffer.insert(buffer.end(), width_str.begin(), width_str.end());
+    buffer.push_back(' ');
+
+    std::string height_str = std::to_string(img.height);
+    buffer.insert(buffer.end(), height_str.begin(), height_str.end());
+    buffer.push_back('\n');
+
+    // Escribir el valor máximo de color, seguido de un salto de línea
+    std::string max_color_str = std::to_string(img.max_color_value);
+    buffer.insert(buffer.end(), max_color_str.begin(), max_color_str.end());
+    buffer.push_back('\n');
+
+    // Escribir los datos de los píxeles en formato RGB
+    if (img.max_color_value <= 255) {
+        // Si el valor máximo de color es <= 255, cada componente se guarda en 1 byte
+        for (const Pixel& pixel : img.pixels) {
+            buffer.push_back(static_cast<uint8_t>(pixel.r));
+            buffer.push_back(static_cast<uint8_t>(pixel.g));
+            buffer.push_back(static_cast<uint8_t>(pixel.b));
+        }
+    } else {
+        // Si el valor máximo de color es > 255, cada componente se guarda en 2 bytes (little-endian)
+        for (const Pixel& pixel : img.pixels) {
+            buffer.push_back(static_cast<uint8_t>(pixel.r & 0xFF));
+            buffer.push_back(static_cast<uint8_t>((pixel.r >> 8) & 0xFF));
+            buffer.push_back(static_cast<uint8_t>(pixel.g & 0xFF));
+            buffer.push_back(static_cast<uint8_t>((pixel.g >> 8) & 0xFF));
+            buffer.push_back(static_cast<uint8_t>(pixel.b & 0xFF));
+            buffer.push_back(static_cast<uint8_t>((pixel.b >> 8) & 0xFF));
+        }
+    }
+
+    // Escribir el buffer al archivo usando BinaryIO
+    BinaryIO::writeBinaryFile(filePath, buffer);
+}
 
 void print_image_info(const ImageAos& img){
     std::cout << "Ancho: " << img.width << std::endl;
@@ -180,24 +319,13 @@ void cut_freq(ImageAos& img, int n) {
 }
 
 void compress_image(const ImageAos& img, const std::string& output) {
-    // Crear un archivo binario para escribir los datos comprimidos
-    std::ofstream file(output + ".cppm", std::ios::binary);
-    if (!file) {
-        throw std::runtime_error("Error: No se pudo abrir el archivo " + output + ".cppm");
-    }
+    std::vector<uint8_t> buffer;
 
-    BinaryWriter writer(file);
+    // Escribir el encabezado (por ejemplo, "C6 ancho alto max_color_value")
+    std::string header = "C6 " + std::to_string(img.width) + " " + std::to_string(img.height) + " " + std::to_string(img.max_color_value) + " ";
+    buffer.insert(buffer.end(), header.begin(), header.end());
 
-    // Escribir un encabezado simple para el archivo comprimido
-    writer.write_string("C6 ");
-    writer.write_ascii_int(img.width);
-    writer.write_string(" ");
-    writer.write_ascii_int(img.height);
-    writer.write_string(" ");
-    writer.write_ascii_int(img.max_color_value);
-    writer.write_string(" ");
-
-    // Crear un mapa de frecuencia de colores y una lista de colores
+    // Crear un mapa de frecuencia de colores y una lista de colores únicos
     std::map<Pixel, int> freq_map;
     std::vector<Pixel> color_list;
     int color_index = 0;
@@ -208,20 +336,23 @@ void compress_image(const ImageAos& img, const std::string& output) {
         }
     }
 
-    // Escribir el número de entradas de la tabla de colores
-    writer.write_ascii_int(static_cast<int>(color_list.size()));
-    writer.write_string("\n");
+    // Escribir el número de colores únicos
+    std::string color_count = std::to_string(color_list.size()) + "\n";
+    buffer.insert(buffer.end(), color_count.begin(), color_count.end());
 
     // Escribir la tabla de colores
     for (const auto& pixel : color_list) {
         if (img.max_color_value <= 255) {
-            writer.write_uint8(static_cast<uint8_t>(pixel.r));
-            writer.write_uint8(static_cast<uint8_t>(pixel.g));
-            writer.write_uint8(static_cast<uint8_t>(pixel.b));
+            buffer.push_back(static_cast<uint8_t>(pixel.r));
+            buffer.push_back(static_cast<uint8_t>(pixel.g));
+            buffer.push_back(static_cast<uint8_t>(pixel.b));
         } else {
-            writer.write_uint16(pixel.r);
-            writer.write_uint16(pixel.g);
-            writer.write_uint16(pixel.b);
+            buffer.push_back(static_cast<uint8_t>(pixel.r >> 8));
+            buffer.push_back(static_cast<uint8_t>(pixel.r & 0xFF));
+            buffer.push_back(static_cast<uint8_t>(pixel.g >> 8));
+            buffer.push_back(static_cast<uint8_t>(pixel.g & 0xFF));
+            buffer.push_back(static_cast<uint8_t>(pixel.b >> 8));
+            buffer.push_back(static_cast<uint8_t>(pixel.b & 0xFF));
         }
     }
 
@@ -230,12 +361,10 @@ void compress_image(const ImageAos& img, const std::string& output) {
     for (const auto& pixel : img.pixels) {
         int index = freq_map[pixel];
         for (int i = 0; i < index_size; ++i) {
-            writer.write_uint8(static_cast<uint8_t>((index >> (i * 8)) & 0xFF));
+            buffer.push_back(static_cast<uint8_t>((index >> (i * 8)) & 0xFF));
         }
     }
 
-    // Verificar si hubo un error al escribir los datos comprimidos
-    if (!file) {
-        throw std::runtime_error("Error: Error al escribir los datos de los píxeles comprimidos.");
-    }
+    // Escribir el buffer al archivo usando BinaryIO
+    BinaryIO::writeBinaryFile(output + ".cppm", buffer);
 }

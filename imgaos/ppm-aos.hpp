@@ -1,4 +1,4 @@
-#ifndef PPM_HPP
+/*#ifndef PPM_HPP
 #define PPM_HPP
 
 #include <string>
@@ -12,3 +12,4 @@ void write_ppm_image_aos(const std::string& filename, const ImageAos& image);
 
 #endif // PPM_HPP
 
+*/

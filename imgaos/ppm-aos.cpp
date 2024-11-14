@@ -1,4 +1,4 @@
-#include "imageaos.hpp"
+/*#include "imageaos.hpp"
 #include "../common/binaryio.hpp"
 #include <fstream>
 #include <iostream>
@@ -93,3 +93,4 @@ void write_ppm_image_aos(const std::string& filename, const ImageAos& img) {
         }
     }
 }
+*/

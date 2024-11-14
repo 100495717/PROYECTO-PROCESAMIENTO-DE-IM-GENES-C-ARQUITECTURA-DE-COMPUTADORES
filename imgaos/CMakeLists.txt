@@ -1,7 +1,6 @@
 # Add to this list all files related to imgaos library
 add_library(imgaos
     image-operations-aos.cpp
-    ppm-aos.cpp
 )
 
 

@@ -1,4 +1,4 @@
-#ifndef IMAGEAOS_HPP
+/*#ifndef IMAGEAOS_HPP
 #define IMAGEAOS_HPP
 
 #include <vector>
@@ -29,4 +29,4 @@ public:
 
 };
 
-#endif // IMAGEAOS_HPP
+#endif // IMAGEAOS_HPP*/
