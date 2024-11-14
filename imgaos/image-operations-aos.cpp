@@ -93,11 +93,11 @@ void load_image_from_file(const std::string& filePath, ImageAos& img) {
             img.pixels[i].b = buffer[offset++];
         } else {
             // Leer 2 bytes por componente (RGB), en formato little-endian
-            img.pixels[i].r = buffer[offset] | (buffer[offset + 1] << 8);
+            img.pixels[i].r = static_cast<uint16_t>(buffer[offset] | (buffer[offset + 1] << 8));
             offset += 2;
-            img.pixels[i].g = buffer[offset] | (buffer[offset + 1] << 8);
+            img.pixels[i].g = static_cast<uint16_t>(buffer[offset] | (buffer[offset + 1] << 8));
             offset += 2;
-            img.pixels[i].b = buffer[offset] | (buffer[offset + 1] << 8);
+            img.pixels[i].b = static_cast<uint16_t>(buffer[offset] | (buffer[offset + 1] << 8));
             offset += 2;
         }
     }
@@ -249,26 +249,11 @@ void resize_image(ImageAos& img, int width, int height){
     img.pixels = std::move(new_pixels);
 }
 
-// Función auxiliar para calcular la distancia euclídea entre dos píxeles
-double color_distance(const Pixel& a, const Pixel& b) {
-    return std::sqrt(std::pow(a.r - b.r, 2) + std::pow(a.g - b.g, 2) + std::pow(a.b - b.b, 2));
-}
 
-// Función para encontrar el píxel más cercano
-Pixel find_closest_pixel(const Pixel& target, const std::vector<Pixel>& pixels) {
-    double min_distance = std::numeric_limits<double>::max();
-    Pixel closest = target;
-    // Iterar sobre los píxeles y encontrar el más cercano al objetivo
-    for (const auto& pixel : pixels) {
-        double distance = color_distance(target, pixel);
-        if (distance < min_distance) {
-            min_distance = distance;
-            closest = pixel;
-        }
-    }
-    return closest;
-}
 
+
+
+// Función principal cut_freq en formato AOS
 void cut_freq(ImageAos& img, int n) {
     // Paso 1: Determinar la frecuencia de cada color
     std::unordered_map<Pixel, int> freq_map;
@@ -276,23 +261,20 @@ void cut_freq(ImageAos& img, int n) {
         freq_map[pixel]++;
     }
 
-    // Comprobamos si 'n' es válido
-    if (n <= 0) {
-        throw std::invalid_argument("El número de colores a eliminar debe ser mayor que cero.");
-    }
-    if (static_cast<size_t>(n) > freq_map.size()) {
-        throw std::invalid_argument("El número de colores a eliminar no puede ser mayor que el número de colores únicos en la imagen.");
+    // Validar el valor de 'n'
+    if (n <= 0 || static_cast<size_t>(n) > freq_map.size()) {
+        throw std::invalid_argument("El número de colores a eliminar debe estar entre 1 y el número de colores únicos en la imagen.");
     }
 
     // Paso 2: Identificar los n colores menos frecuentes
     std::vector<std::pair<Pixel, int>> freq_vec(freq_map.begin(), freq_map.end());
-    std::partial_sort(freq_vec.begin(), freq_vec.begin() + n, freq_vec.end(), [](const auto& a, const auto& b) {
+    std::nth_element(freq_vec.begin(), freq_vec.begin() + n, freq_vec.end(), [](const auto& a, const auto& b) {
         return a.second < b.second;
     });
 
-    // Crear un conjunto de los colores menos frecuentes
+    // Crear un conjunto con los colores menos frecuentes
     std::unordered_set<Pixel> least_freq_pixels;
-    for (int i = 0; i < n && static_cast<size_t>(i) < freq_vec.size(); ++i) {
+    for (int i = 0; i < n; ++i) {
         least_freq_pixels.insert(freq_vec[static_cast<std::vector<std::pair<Pixel, int>>::size_type>(i)].first);
     }
 
@@ -304,10 +286,16 @@ void cut_freq(ImageAos& img, int n) {
         }
     }
 
-    // Crear un mapa de reemplazo para evitar cálculos redundantes
+    if (remaining_pixels.empty()) {
+        std::cerr << "No hay colores restantes para construir el KDTree. Abortando operación." << std::endl;
+        return;
+    }
+
+    KDTree tree(remaining_pixels);
     std::unordered_map<Pixel, Pixel> replacement_map;
+
     for (const auto& pixel : least_freq_pixels) {
-        replacement_map[pixel] = find_closest_pixel(pixel, remaining_pixels);
+        replacement_map[pixel] = tree.nearestNeighbor(pixel);
     }
 
     // Reemplazar los colores menos frecuentes en la imagen
@@ -366,5 +354,5 @@ void compress_image(const ImageAos& img, const std::string& output) {
     }
 
     // Escribir el buffer al archivo usando BinaryIO
-    BinaryIO::writeBinaryFile(output + ".cppm", buffer);
+    BinaryIO::writeBinaryFile(output, buffer);
 }
