@@ -1,5 +1,4 @@
 #include "../imgsoa/image-operations-soa.hpp"
-#include "../imgsoa/image-operations-soa.cpp"
 #include <cstdint>
 #include <gtest/gtest.h>
 
@@ -7,19 +6,6 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
-
-// Definir un array para representar el color
-using Color = std::array<uint16_t, 3>;
-
-// Definir un hash personalizado para Color
-struct ColorHash {
-    std::size_t operator()(const Color& color) const {
-        auto h1 = std::hash<uint16_t>{}(color[0]);
-        auto h2 = std::hash<uint16_t>{}(color[1]);
-        auto h3 = std::hash<uint16_t>{}(color[2]);
-        return h1 ^ (h2 << 1) ^ (h3 << 2);
-    }
-};
 
 TEST(cutfreq_test, cutfreqnormal){
     ImageSoa img;
@@ -37,7 +23,6 @@ TEST(cutfreq_test, cutfreqnormal){
     for (size_t i = 0; i < img.r.size(); ++i) {
         Color pixel = {img.r[i], img.g[i], img.b[i]};
         freq_map[pixel]++;
-        std::cout << "Pixel(" << img.r[i] << ", " << img.g[i] << ", " << img.b[i] << "): " << freq_map[pixel] << std::endl;
     }
 
     // Verificar que los colores menos frecuentes han sido reemplazados
@@ -85,7 +70,6 @@ TEST(cutfreq_test, cutfreq_big_image) {
     for (size_t i = 0; i < img.r.size(); ++i) {
         Color pixel = {img.r[i], img.g[i], img.b[i]};
         freq_map[pixel]++;
-        std::cout << "Pixel(" << img.r[i] << ", " << img.g[i] << ", " << img.b[i] << "): " << freq_map[pixel] << std::endl;
     }
 
     // Verificar que los colores menos frecuentes han sido reemplazados
