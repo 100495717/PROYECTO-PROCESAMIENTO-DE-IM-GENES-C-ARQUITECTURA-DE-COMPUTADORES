@@ -32,13 +32,6 @@ struct HashColor {
     }
 };
 
-// Función para calcular la distancia euclidiana al cuadrado entre dos colores
-inline int distanciaColorCuadrada(const Color& color1, const Color& color2) {
-    int difRojo = color1[0] - color2[0];
-    int difVerde = color1[1] - color2[1];
-    int difAzul = color1[2] - color2[2];
-    return difRojo * difRojo + difVerde * difVerde + difAzul * difAzul;
-}
 
 // Definición de la estructura KDTree
 struct KDTree {
