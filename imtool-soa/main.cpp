@@ -3,6 +3,7 @@
 #include "../imgaos/ppm-aos.hpp"
 #include "../imgaos/image-operations-aos.hpp"
 #include "../common/binaryio.hpp"
+#include "main.hpp"
 #include <stdexcept>
 #include <vector>
 #include <string>
